@@ -61,9 +61,37 @@ require_once __DIR__ . '/../../includes/header.php';
         <h2>Análise Financeira Inteligente</h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Faça o upload do seu extrato para receber um diagnóstico guiado por IA.</p>
         
-        <?php if (!$isLogged): ?>
-            <div style="margin-bottom: 30px; padding: 10px; background: <?= $analisesRestantes > 0 ? '#e8f0fe' : '#f8d7da' ?>; border-radius: 8px; display: inline-block;">
-                <strong>Você tem <?= $analisesRestantes ?> de <?= $limiteGratuito ?> análises gratuitas restantes.</strong>
+        <!-- Indicador de Créditos Visual -->
+        <?php 
+        $mostrarCreditos = !$isLogged || $planoUsuario === 'gratis';
+        if ($mostrarCreditos): 
+            $percentualUsado = ($usoGratuito / $limiteGratuito) * 100;
+            $percentualRestante = 100 - $percentualUsado;
+        ?>
+            <div style="margin-bottom: 30px; background: #f5f7fa; border-radius: 12px; border: 1px solid #e0e3e9; padding: 16px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-weight: 700; color: var(--text-main); font-size: 14px;">Análises Disponíveis</span>
+                    <span style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;">
+                        <?= (int) $analisesRestantes ?>/<?= (int) $limiteGratuito ?>
+                    </span>
+                </div>
+                
+                <div style="background: #e0e3e9; border-radius: 999px; height: 10px; overflow: hidden;">
+                    <div style="background: linear-gradient(90deg, var(--primary), #0d47a1); height: 100%; width: <?= (int) $percentualUsado ?>%; transition: width 0.4s ease;"></div>
+                </div>
+                
+                <div style="margin-top: 10px; font-size: 12px; color: var(--text-muted);">
+                    <?php if ($analisesRestantes > 0): ?>
+                        <strong style="color: var(--success);">✓</strong> Você ainda tem <strong><?= (int) $analisesRestantes ?> análise(s)</strong> neste mês.
+                    <?php else: ?>
+                        <strong style="color: var(--danger);">✗</strong> Você atingiu seu limite. Considere <strong><a href="planos.php" style="color: var(--primary);">assinar</a></strong> para acesso ilimitado.
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php elseif ($isLogged && $planoUsuario === 'pro'): ?>
+            <div style="margin-bottom: 30px; background: linear-gradient(135deg, #c8e6c9, #a5d6a7); border-radius: 12px; border: 2px solid var(--success); padding: 16px; max-width: 400px; margin-left: auto; margin-right: auto; color: #1b5e20;">
+                <div style="font-weight: 700; font-size: 14px; margin-bottom: 6px;">🚀 Plano Pro</div>
+                <div style="font-size: 13px;">Análises ilimitadas - aproveite ao máximo!</div>
             </div>
         <?php endif; ?>
 
@@ -98,15 +126,4 @@ require_once __DIR__ . '/../../includes/header.php';
 <style>
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
-
-<script>
-    const form = document.getElementById('uploadForm');
-    if (form) {
-        form.addEventListener('submit', function() {
-            document.getElementById('form-area').style.display = 'none';
-            document.getElementById('loading-area').style.display = 'block';
-        });
-    }
-</script>
-
-<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
+        <div style="font-size: 13px; color: var(--text-muted);">Resumo do mes em tempo real</div>

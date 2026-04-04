@@ -90,14 +90,23 @@ if (!in_array($mimeType, $mimesPermitidos[$extensao] ?? [], true)) {
     die('Tipo de arquivo nao permitido para a extensao enviada.');
 }
 
-$prompt = "Extraia as transacoes deste extrato bancario ou planilha. Ignore linhas de saldo. " .
-          "Classifique cada transacao em uma categoria curta (ex: 'Alimentacao', 'Transporte', 'Pix', 'Moradia'). " .
-          "Use estritamente a seguinte estrutura JSON: " .
-          "{" .
-          "  \"transacoes\": [" .
-          "    { \"descricao\": \"string\", \"categoria\": \"string\", \"valor\": 0.00, \"tipo\": \"entrada\" ou \"saida\" }" .
-          "  ]," .
-          "  \"dicas\": [ \"string\" ]" .
+$prompt = "Voce e um analista financeiro humanoide, empatico e direto. Seu papel e:\n" .
+          "1. Extrair TODAS as transacoes do extrato/planilha.\n" .
+          "2. Classificar em categorias simples (ex: 'Alimentacao', 'Transporte', 'Pix', 'Salario', 'Moradia', 'Extras').\n" .
+          "3. Gerar dicas PERSONALIZADAS e humanizadas:\n" .
+          "   - Se a renda for consistente e boa: elogie com tom natural ('Boa fonte de renda!', 'Voce tem um fluxo solido').\n" .
+          "   - Se nao houver renda fixa: avise sobre a volatilidade.\n" .
+          "   - Identifique o MAIOR GASTO e de UM CONSELHO AMIGAVEL (nunca severo):\n" .
+          "     Ex: 'Seu maior gasto foi em Alimentacao (R\$ 2.500). Nada errado em investir em comida boa, mas considere meal prep 1x por semana para economizar sem sacrificar qualidade.'\n" .
+          "   - Se o usuario poupou bem: reconheca.\n" .
+          "   - Se ficou no vermelho: seja solidario, nao culpabilize.\n" .
+          "4. Retorne JSON com transacoes + dicas (3-5 dicas no maximo, cada uma 50-100 palavras).\n" .
+          "RETORNE ESTE JSON EXATO:\n" .
+          "{\n" .
+          "  \"transacoes\": [\n" .
+          "    { \"descricao\": \"string\", \"categoria\": \"string\", \"valor\": 0.00, \"tipo\": \"entrada\" ou \"saida\" }\n" .
+          "  ],\n" .
+          "  \"dicas\": [ \"string com conselho amigavel e acionavel\" ]\n" .
           "}";
 
 $partes = [["text" => $prompt]];

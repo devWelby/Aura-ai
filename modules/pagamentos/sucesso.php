@@ -31,6 +31,8 @@ try {
         exit;
     }
 
+    $stmt = $pdo->prepare("UPDATE usuarios SET plano = 'pro' WHERE id = ?");
+    $stmt->execute([(int) $_SESSION['usuario_id']]);
     $_SESSION['usuario_plano'] = 'pro';
 } catch (Exception $e) {
     header("Location: planos.php?msg=erro_validacao_pagamento");

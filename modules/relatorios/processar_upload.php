@@ -1,5 +1,4 @@
 <?php
-// processar_upload.php
 require_once __DIR__ . '/../../config/init.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -9,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 validar_csrf_post();
 
-// 🚨 TRAVA DO MODELO FREEMIUM
+// Controle de acesso ao plano e aos créditos gratuitos.
 $isLogged = isset($_SESSION['usuario_id']);
 $usoGratuito = ler_uso_gratuito_assinado();
 
@@ -30,11 +29,14 @@ if (!$isLogged && $usoGratuito >= $limiteGratuito) {
 }
 
 if ($isLogged && $planoUsuario !== 'pro') {
-    header("Location: planos.php?msg=assinatura_necessaria");
-    exit;
+    $restantesLogado = analises_gratis_restantes_usuario($pdo, (int) $_SESSION['usuario_id'], $limiteGratuito);
+    if ($restantesLogado <= 0) {
+        header("Location: planos.php?msg=limite_excedido");
+        exit;
+    }
 }
 
-// Rate limit simples em sessao para conter abuso de API
+// Rate limit simples em sessão para conter abuso de API.
 if (!isset($_SESSION['upload_rate']) || !is_array($_SESSION['upload_rate'])) {
     $_SESSION['upload_rate'] = ['count' => 0, 'reset_at' => time() + 3600];
 }
@@ -44,13 +46,13 @@ if (time() > (int) $_SESSION['upload_rate']['reset_at']) {
 $_SESSION['upload_rate']['count']++;
 if ((int) $_SESSION['upload_rate']['count'] > 10) {
     http_response_code(429);
-    die('Muitas analises em pouco tempo. Tente novamente em alguns minutos.');
+    die('Muitas análises em pouco tempo. Tente novamente em alguns minutos.');
 }
 
 $apiKey = $_ENV['GEMINI_API_KEY']; 
 if (!$apiKey) {
     http_response_code(500);
-    die('Servico indisponivel no momento.');
+    die('Serviço indisponível no momento.');
 }
 
 if (!isset($_FILES['extrato']) || $_FILES['extrato']['error'] !== UPLOAD_ERR_OK) {
@@ -66,11 +68,11 @@ $tiposPermitidos = ['pdf', 'csv', 'xlsx', 'xls'];
 $maxBytes = 5 * 1024 * 1024; // 5MB
 
 if ($arquivoSize <= 0 || $arquivoSize > $maxBytes) {
-    die('Arquivo invalido. Envie um arquivo de ate 5MB.');
+    die('Arquivo inválido. Envie um arquivo de até 5MB.');
 }
 
 if (!in_array($extensao, $tiposPermitidos, true)) {
-    die("Formato invalido. Envie apenas arquivos PDF, CSV ou Excel (.xlsx, .xls).");
+    die("Formato inválido. Envie apenas arquivos PDF, CSV ou Excel (.xlsx, .xls).");
 }
 
 $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -87,26 +89,26 @@ $mimesPermitidos = [
 ];
 
 if (!in_array($mimeType, $mimesPermitidos[$extensao] ?? [], true)) {
-    die('Tipo de arquivo nao permitido para a extensao enviada.');
+    die('Tipo de arquivo não permitido para a extensão enviada.');
 }
 
-$prompt = "Voce e um analista financeiro humanoide, empatico e direto. Seu papel e:\n" .
-          "1. Extrair TODAS as transacoes do extrato/planilha.\n" .
-          "2. Classificar em categorias simples (ex: 'Alimentacao', 'Transporte', 'Pix', 'Salario', 'Moradia', 'Extras').\n" .
+$prompt = "Você é um analista financeiro humanoide, empático e direto. Seu papel é:\n" .
+          "1. Extrair TODAS as transações do extrato/planilha.\n" .
+          "2. Classificar em categorias simples (ex: 'Alimentação', 'Transporte', 'Pix', 'Salário', 'Moradia', 'Extras').\n" .
           "3. Gerar dicas PERSONALIZADAS e humanizadas:\n" .
-          "   - Se a renda for consistente e boa: elogie com tom natural ('Boa fonte de renda!', 'Voce tem um fluxo solido').\n" .
-          "   - Se nao houver renda fixa: avise sobre a volatilidade.\n" .
-          "   - Identifique o MAIOR GASTO e de UM CONSELHO AMIGAVEL (nunca severo):\n" .
-          "     Ex: 'Seu maior gasto foi em Alimentacao (R\$ 2.500). Nada errado em investir em comida boa, mas considere meal prep 1x por semana para economizar sem sacrificar qualidade.'\n" .
-          "   - Se o usuario poupou bem: reconheca.\n" .
-          "   - Se ficou no vermelho: seja solidario, nao culpabilize.\n" .
-          "4. Retorne JSON com transacoes + dicas (3-5 dicas no maximo, cada uma 50-100 palavras).\n" .
+          "   - Se a renda for consistente e boa: elogie com tom natural ('Boa fonte de renda!', 'Você tem um fluxo sólido').\n" .
+          "   - Se não houver renda fixa: avise sobre a volatilidade.\n" .
+          "   - Identifique o MAIOR GASTO e dê UM CONSELHO AMIGÁVEL (nunca severo):\n" .
+          "     Ex: 'Seu maior gasto foi em Alimentação (R\$ 2.500). Nada errado em investir em comida boa, mas considere meal prep 1x por semana para economizar sem sacrificar qualidade.'\n" .
+          "   - Se o usuário poupou bem: reconheça.\n" .
+          "   - Se ficou no vermelho: seja solidário, não culpabilize.\n" .
+          "4. Retorne JSON com transações + dicas (3-5 dicas no máximo, cada uma com 50-100 palavras).\n" .
           "RETORNE ESTE JSON EXATO:\n" .
           "{\n" .
           "  \"transacoes\": [\n" .
           "    { \"descricao\": \"string\", \"categoria\": \"string\", \"valor\": 0.00, \"tipo\": \"entrada\" ou \"saida\" }\n" .
           "  ],\n" .
-          "  \"dicas\": [ \"string com conselho amigavel e acionavel\" ]\n" .
+          "  \"dicas\": [ \"string com conselho amigável e acionável\" ]\n" .
           "}";
 
 $partes = [["text" => $prompt]];
@@ -131,7 +133,7 @@ if ($extensao === 'pdf') {
         $dadosPlanilha = ob_get_clean();
         $partes[0]["text"] .= "\n\n--- DADOS DA PLANILHA ---\n" . $dadosPlanilha;
     } catch (Exception $e) {
-        die("Nao foi possivel ler a planilha enviada.");
+        die("Não foi possível ler a planilha enviada.");
     }
 }
 
@@ -157,7 +159,7 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 $resposta = curl_exec($ch);
 if (curl_errno($ch)) {
     curl_close($ch);
-    die('Erro na comunicacao com o servico de analise. Tente novamente.');
+    die('Erro na comunicação com o serviço de análise. Tente novamente.');
 }
 curl_close($ch);
 
@@ -184,7 +186,7 @@ if (isset($respostaDecodificada['candidates'][0]['content']['parts'][0]['text'])
         $dados['dicas'] = [];
     }
 
-    // Incrementa limite gratuito para visitantes
+    // Incrementa o uso gratuito para visitantes.
     if (!$isLogged) {
         salvar_uso_gratuito_assinado($usoGratuito + 1);
     }

@@ -1,6 +1,5 @@
 <?php
-// includes/header.php
-// Verifica se o título da página foi definido antes do include, senão usa um padrão
+// Cabeçalho compartilhado da aplicação.
 $pageTitle = isset($pageTitle) ? $pageTitle : "Seu Analista Financeiro IA";
 
 $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
@@ -13,7 +12,7 @@ $activePage = basename(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?:
 
 $menuItems = [
     ['href' => 'index.php', 'label' => 'Dashboard', 'active' => ['index.php']],
-    ['href' => 'historico.php', 'label' => 'Historico', 'active' => ['historico.php', 'ver_relatorio.php'], 'auth' => true],
+    ['href' => 'historico.php', 'label' => 'Histórico', 'active' => ['historico.php', 'ver_relatorio.php'], 'auth' => true],
     ['href' => 'planos.php', 'label' => 'Planos', 'active' => ['planos.php', 'checkout.php', 'sucesso.php']]
 ];
 ?>

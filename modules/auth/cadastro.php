@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $senha = trim($_POST['senha'] ?? '');
 
     if (empty($nome) || empty($email) || empty($senha)) {
-        $erro = "Por favor, preencha todos os campos.";
+        $erro = "Preencha todos os campos.";
     } elseif (strlen($senha) < 8) {
         $erro = "A senha deve ter no minimo 8 caracteres.";
     } elseif (!preg_match('/[A-Z]/', $senha) || !preg_match('/[0-9]/', $senha)) {
@@ -31,12 +31,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $erro = "Este e-mail já está cadastrado.";
         } else {
             $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)");
+            $token = bin2hex(random_bytes(32));
+            $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha, token_verificacao, plano) VALUES (?, ?, ?, ?, 'gratis')");
             
-            if ($stmt->execute([$nome, $email, $senhaHash])) {
-                $sucesso = "Cadastro realizado com sucesso! Você já pode fazer login.";
+            if ($stmt->execute([$nome, $email, $senhaHash, $token])) {
+                $resend = Resend::client($_ENV['RESEND_API_KEY'] ?? '');
+                $urlBase = rtrim((string) ($_ENV['URL_BASE'] ?? app_base_url()), '/');
+                $link = $urlBase . "/verificar_email.php?token=" . urlencode($token);
+
+                try {
+                    $resend->emails->send([
+                        'from' => 'Analista IA <onboarding@resend.dev>',
+                        'to' => [$email],
+                        'subject' => 'Ative sua conta - Analista IA',
+                        'html' => "<h2>Ola, " . htmlspecialchars($nome, ENT_QUOTES, 'UTF-8') . "!</h2>"
+                            . "<p>Falta pouco para voce analisar suas financas com Inteligencia Artificial.</p>"
+                            . "<p><a href='" . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . "' style='padding: 10px 20px; background: #1a73e8; color: white; text-decoration: none; border-radius: 5px;'>Clique aqui para ativar sua conta</a></p>"
+                    ]);
+
+                    $sucesso = "Cadastro realizado! Verifique seu e-mail para ativar a conta antes de fazer login.";
+                } catch (Exception $e) {
+                    $erro = "Conta criada, mas falha ao enviar o e-mail: " . $e->getMessage();
+                }
             } else {
-                $erro = "Erro interno ao cadastrar. Tente novamente.";
+                $erro = "Erro interno ao cadastrar.";
             }
         }
     }

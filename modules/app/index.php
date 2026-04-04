@@ -1,8 +1,7 @@
 <?php
-// index.php
 require_once __DIR__ . '/../../config/init.php';
 
-// 1. Lógica de Controle de Acesso e Limites
+// Lógica de controle de acesso e limites.
 $isLogged = isset($_SESSION['usuario_id']);
 $nomeUsuario = $isLogged ? $_SESSION['usuario_nome'] : 'Visitante';
 $planoUsuario = 'visitante';
@@ -15,12 +14,17 @@ if ($isLogged) {
     $_SESSION['usuario_plano'] = $planoUsuario;
 }
 
-// Lê o cookie de uso do visitante. Se não existir, é 0.
+// Uso gratuito para visitante via cookie assinado.
 $usoGratuito = ler_uso_gratuito_assinado();
 $limiteGratuito = 2;
-$analisesRestantes = max(0, $limiteGratuito - $usoGratuito);
+$analisesUsadas = $usoGratuito;
+$analisesRestantes = max(0, $limiteGratuito - $analisesUsadas);
 
-// Se for usuário pago, não tem limite de cookie
+if ($isLogged && $planoUsuario !== 'pro') {
+    $analisesRestantes = analises_gratis_restantes_usuario($pdo, (int) $_SESSION['usuario_id'], $limiteGratuito);
+    $analisesUsadas = max(0, $limiteGratuito - $analisesRestantes);
+}
+
 $temAcesso = ($isLogged && $planoUsuario === 'pro') || ($analisesRestantes > 0);
 
 $pageTitle = "Dashboard - Analista IA";
@@ -39,15 +43,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 </span>
             <?php endif; ?>
         </div>
-        <div class="nav-links">
-            <?php if ($isLogged): ?>
-                <a href="historico.php">Meu Histórico</a>
-                <a href="logout.php" style="color: var(--danger);">Sair</a>
-            <?php else: ?>
-                <a href="planos.php" style="color: var(--success);">Ver Planos</a>
-                <a href="login.php">Fazer Login</a>
-            <?php endif; ?>
-        </div>
+        <div style="font-size: 13px; color: var(--text-muted);">Resumo do mês em tempo real</div>
     </div>
 
     <?php if (!$isLogged || $planoUsuario === 'gratis'): ?>
@@ -61,11 +57,10 @@ require_once __DIR__ . '/../../includes/header.php';
         <h2>Análise Financeira Inteligente</h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Faça o upload do seu extrato para receber um diagnóstico guiado por IA.</p>
         
-        <!-- Indicador de Créditos Visual -->
         <?php 
         $mostrarCreditos = !$isLogged || $planoUsuario === 'gratis';
         if ($mostrarCreditos): 
-            $percentualUsado = ($usoGratuito / $limiteGratuito) * 100;
+            $percentualUsado = ($analisesUsadas / $limiteGratuito) * 100;
             $percentualRestante = 100 - $percentualUsado;
         ?>
             <div style="margin-bottom: 30px; background: #f5f7fa; border-radius: 12px; border: 1px solid #e0e3e9; padding: 16px; max-width: 400px; margin-left: auto; margin-right: auto;">
@@ -126,4 +121,3 @@ require_once __DIR__ . '/../../includes/header.php';
 <style>
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
-        <div style="font-size: 13px; color: var(--text-muted);">Resumo do mes em tempo real</div>

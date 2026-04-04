@@ -1,8 +1,7 @@
 <?php
 // config/init.php
 
-// 0. Controle de exibicao de erros por ambiente
-// Em producao, nunca exibir erros para o usuario final
+// Controle de exibição de erros por ambiente.
 $appEnv = getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? 'development');
 if ($appEnv === 'production') {
     ini_set('display_errors', '0');
@@ -14,17 +13,17 @@ if ($appEnv === 'production') {
     error_reporting(E_ALL);
 }
 
-// 1. Segurança de Sessão Nível Sênior
+// Segurança de sessão.
 session_set_cookie_params([
     'lifetime' => 86400,
     'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
-    'httponly' => true, // Impede que hackers roubem o cookie via JavaScript (XSS)
-    'samesite' => 'Lax' // Previne ataques CSRF
+    'httponly' => true,
+    'samesite' => 'Lax'
 ]);
 ini_set('session.use_strict_mode', '1');
 session_start();
 
-// Previne "Session Fixation" renovando o ID da sessão a cada 30 minutos
+// Renova o ID da sessão periodicamente para reduzir risco de fixation.
 if (!isset($_SESSION['CREATED'])) {
     $_SESSION['CREATED'] = time();
 } else if (time() - $_SESSION['CREATED'] > 1800) {
@@ -32,31 +31,24 @@ if (!isset($_SESSION['CREATED'])) {
     $_SESSION['CREATED'] = time();
 }
 
-// 1b. HTTP Security Headers
-// Aplicados antes de qualquer saida HTML
+// Headers de segurança HTTP.
 if (!headers_sent()) {
-    // Impede que o browser adivinhe o MIME type (sniffing)
     header('X-Content-Type-Options: nosniff');
-    // Impede a pagina de ser carregada em iframe (clickjacking)
     header('X-Frame-Options: SAMEORIGIN');
-    // Ativa filtro XSS do browser (legado, ainda util)
     header('X-XSS-Protection: 1; mode=block');
-    // Controla informacoes enviadas no Referer
     header('Referrer-Policy: strict-origin-when-cross-origin');
-    // Restringe acesso a recursos de hardware
     header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
-    // Remove X-Powered-By para nao revelar versao do PHP
     header_remove('X-Powered-By');
-    // HSTS: forcxa HTTPS por 1 ano (ativar so quando em producao com HTTPS)
+    // HSTS: habilitar apenas em produção com HTTPS válido.
     // header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
 }
 
-// 2. Carrega as Bibliotecas e o .env
+// Carrega bibliotecas e variáveis de ambiente.
 require_once __DIR__ . '/../vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
-// 3. Conexão com o Banco de Dados (PDO) blindada via .env
+// Conexão com banco de dados.
 $host = $_ENV['DB_HOST'] ?? 'localhost';
 $dbname = $_ENV['DB_NAME'] ?? 'analista_financeiro_db';
 $usuario = $_ENV['DB_USER'] ?? 'root';
@@ -67,16 +59,15 @@ try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    // Esconde o erro real em produção para não dar dicas a hackers
-    die("Erro fatal ao conectar ao banco de dados."); 
+    die('Erro fatal ao conectar ao banco de dados.');
 }
 
-// Função de utilidade para limpar dados e evitar XSS
+// Utilitário para limpeza de saída textual.
 function limpar_dado($dado) {
     return htmlspecialchars(trim($dado), ENT_QUOTES, 'UTF-8');
 }
 
-// Token CSRF reutilizavel para todos os formularios POST
+// Token CSRF reutilizável para formulários POST.
 function csrf_token() {
     if (!isset($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token']) || strlen($_SESSION['csrf_token']) < 32) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -94,7 +85,7 @@ function validar_csrf_post() {
 
     if (!is_string($tokenRecebido) || !is_string($tokenSessao) || !hash_equals($tokenSessao, $tokenRecebido)) {
         http_response_code(403);
-        die('Falha de validacao de seguranca. Recarregue a pagina e tente novamente.');
+        die('Falha de validação de segurança. Recarregue a página e tente novamente.');
     }
 }
 
@@ -140,5 +131,54 @@ function salvar_uso_gratuito_assinado($uso) {
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
+}
+
+function app_base_url() {
+    $appUrl = $_ENV['APP_URL'] ?? '';
+    if (is_string($appUrl) && $appUrl !== '') {
+        $valid = filter_var($appUrl, FILTER_VALIDATE_URL);
+        if (is_string($valid)) {
+            $scheme = strtolower((string) parse_url($valid, PHP_URL_SCHEME));
+            if ($scheme === 'http' || $scheme === 'https') {
+                return rtrim($valid, '/');
+            }
+        }
+    }
+
+    $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    $scheme = $isHttps ? 'https' : 'http';
+    $serverName = $_SERVER['SERVER_NAME'] ?? 'localhost';
+    $host = is_string($serverName) && preg_match('/^[a-z0-9.-]+$/i', $serverName) ? $serverName : 'localhost';
+    $port = (int) ($_SERVER['SERVER_PORT'] ?? 0);
+    $isDefaultPort = ($scheme === 'http' && $port === 80) || ($scheme === 'https' && $port === 443);
+
+    $hostWithPort = $host;
+    if ($port > 0 && !$isDefaultPort) {
+        $hostWithPort .= ':' . $port;
+    }
+
+    $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\');
+    if ($basePath === '/' || $basePath === '\\' || $basePath === '.') {
+        $basePath = '';
+    }
+
+    return $scheme . '://' . $hostWithPort . $basePath;
+}
+
+function analises_gratis_restantes_usuario(PDO $pdo, $usuarioId, $limite = 2) {
+    $usuarioId = (int) $usuarioId;
+    $limite = max(0, (int) $limite);
+    if ($usuarioId <= 0 || $limite <= 0) {
+        return 0;
+    }
+
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM historico_analises WHERE usuario_id = ? AND YEAR(criado_em) = YEAR(CURDATE()) AND MONTH(criado_em) = MONTH(CURDATE())");
+        $stmt->execute([$usuarioId]);
+        $total = (int) ($stmt->fetch()['total'] ?? 0);
+        return max(0, $limite - $total);
+    } catch (Exception $e) {
+        return 0;
+    }
 }
 ?>

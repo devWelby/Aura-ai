@@ -2,22 +2,27 @@
 // login.php
 require_once __DIR__ . '/../../config/init.php';
 
-// Se já estiver logado, manda para o painel principal
+// Se já estiver logado, redireciona para o painel principal
 if (isset($_SESSION['usuario_id'])) {
     header("Location: index.php");
     exit;
 }
 
 $erro = '';
+$sucesso = '';
 
-// Protecao contra Brute-Force: max 5 tentativas falhas, bloqueio de 15 minutos
+if (($_GET['msg'] ?? '') === 'conta_ativada') {
+    $sucesso = 'Conta ativada com sucesso! Agora você pode fazer login.';
+}
+
+// Proteção contra brute-force: máximo de 5 tentativas, com bloqueio de 15 minutos.
 $bfKey = 'login_bf';
 if (!isset($_SESSION[$bfKey]) || !is_array($_SESSION[$bfKey])) {
     $_SESSION[$bfKey] = ['count' => 0, 'locked_until' => 0];
 }
 $bf = &$_SESSION[$bfKey];
 
-// Libera o bloqueio se o tempo ja passou
+// Libera o bloqueio se o tempo já passou.
 if ((int) $bf['locked_until'] > 0 && time() >= (int) $bf['locked_until']) {
     $bf['count'] = 0;
     $bf['locked_until'] = 0;
@@ -25,7 +30,7 @@ if ((int) $bf['locked_until'] > 0 && time() >= (int) $bf['locked_until']) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // Verifica bloqueio antes de qualquer processamento
+    // Verifica bloqueio antes de qualquer processamento.
     if (time() < (int) $bf['locked_until']) {
         $restante = (int) $bf['locked_until'] - time();
         $erro = "Muitas tentativas incorretas. Aguarde {$restante} segundo(s) e tente novamente.";
@@ -35,28 +40,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = limpar_dado($_POST['email'] ?? '');
         $senha = trim($_POST['senha'] ?? '');
 
-        $stmt = $pdo->prepare("SELECT id, nome, senha FROM usuarios WHERE email = ?");
+        $stmt = $pdo->prepare("SELECT id, nome, senha, plano, email_verificado FROM usuarios WHERE email = ?");
         $stmt->execute([$email]);
         $usuario = $stmt->fetch();
 
         if ($usuario && password_verify($senha, $usuario['senha'])) {
-            // Login bem-sucedido: zera o contador e regenera sessao
-            $bf['count'] = 0;
-            $bf['locked_until'] = 0;
+            // Exige e-mail verificado antes de liberar login.
+            if ((int) ($usuario['email_verificado'] ?? 0) === 0) {
+                $erro = 'Sua conta ainda não foi ativada. Verifique sua caixa de entrada ou spam.';
+            } else {
+                // Login bem-sucedido: zera contador e regenera sessão.
+                $bf['count'] = 0;
+                $bf['locked_until'] = 0;
 
-            session_regenerate_id(true);
-            $_SESSION['usuario_id'] = $usuario['id'];
-            $_SESSION['usuario_nome'] = $usuario['nome'];
+                session_regenerate_id(true);
+                $_SESSION['usuario_id'] = $usuario['id'];
+                $_SESSION['usuario_nome'] = $usuario['nome'];
+                $_SESSION['usuario_plano'] = $usuario['plano'] ?? 'gratis';
 
-            $stmtPlano = $pdo->prepare("SELECT plano FROM usuarios WHERE id = ?");
-            $stmtPlano->execute([$usuario['id']]);
-            $registroPlano = $stmtPlano->fetch();
-            $_SESSION['usuario_plano'] = $registroPlano['plano'] ?? 'gratis';
-
-            header('Location: index.php');
-            exit;
+                header('Location: index.php');
+                exit;
+            }
         } else {
-            // Incrementa contador de falhas
+            // Incrementa contador de falhas.
             $bf['count']++;
             if ($bf['count'] >= 5) {
                 $bf['locked_until'] = time() + 900; // 15 minutos
@@ -77,6 +83,7 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="container container-small">
     <h2 style="text-align: center;">Entrar</h2>
     
+    <?php if ($sucesso): ?> <div class="msg sucesso"><?= htmlspecialchars($sucesso, ENT_QUOTES, 'UTF-8') ?></div> <?php endif; ?>
     <?php if ($erro): ?> <div class="msg erro"><?= htmlspecialchars($erro, ENT_QUOTES, 'UTF-8') ?></div> <?php endif; ?>
 
     <a href="login_google.php" class="btn" style="background: #fff; color: #444; border: 1px solid #ddd; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">

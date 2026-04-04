@@ -409,7 +409,7 @@ require_once __DIR__ . '/../../includes/header.php';
 </div>
 
 <script>
-    // Configuração do Gráfico Chart.js
+    // Configuração do gráfico Chart.js.
     const rawLabels = <?= $labelsChart ?>;
     const rawData = <?= $valoresChart ?>;
 
@@ -427,7 +427,7 @@ require_once __DIR__ . '/../../includes/header.php';
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                animation: { duration: 0 }, // 🚨 Removemos a animação para o PDF não bater a foto com o gráfico pela metade
+                animation: { duration: 0 },
                 plugins: { legend: { position: 'bottom' } },
                 cutout: '65%'
             }
@@ -436,30 +436,27 @@ require_once __DIR__ . '/../../includes/header.php';
         document.querySelector('.coluna-grafico').innerHTML = '<p style="text-align:center; color:#888; padding-top:40px;">Sem dados para o gráfico.</p>';
     }
 
-    // 🚨 4. A FUNÇÃO DE EXPORTAÇÃO EM PDF
+    // Exportação em PDF.
     function gerarPDF() {
-        // Altera o texto do botão para dar feedback
+        // Feedback visual durante a geração.
         const btnBotoes = document.getElementById('botoes-acao');
         const btnOriginalHTML = btnBotoes.innerHTML;
         btnBotoes.innerHTML = '<span style="color:var(--primary); font-weight:bold;">⏳ Gerando PDF...</span>';
 
-        // Esconde o botão de "Novo Teste" se for visitante
+        // Esconde botão secundário para não aparecer no PDF.
         const btnNovoTeste = document.getElementById('btn-novo-teste');
         if (btnNovoTeste) btnNovoTeste.style.display = 'none';
 
-        // Seleciona a div que contém todo o conteúdo
         const elemento = document.getElementById('conteudo-pdf');
 
-        // Configurações de alta qualidade
         const opcoes = {
             margin:       10,
             filename:     'Diagnostico_Financeiro_<?= str_replace('/', '_', $mesReferencia) ?>.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true }, // O scale 2 deixa o texto e gráfico super nítidos
+            html2canvas:  { scale: 2, useCORS: true },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // Roda a biblioteca, baixa o arquivo e restaura os botões
         html2pdf().set(opcoes).from(elemento).save().then(() => {
             btnBotoes.innerHTML = btnOriginalHTML;
             if (btnNovoTeste) btnNovoTeste.style.display = 'block';

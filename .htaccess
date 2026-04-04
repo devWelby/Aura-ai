@@ -1,0 +1,62 @@
+# -------------------------------------------------------
+# SEGURANCA - Raiz do projeto
+# -------------------------------------------------------
+
+# Desabilita listagem de diretórios
+Options -Indexes -MultiViews
+
+# -------------------------------------------------------
+# Bloqueia arquivos de configuracao e projeto
+# -------------------------------------------------------
+<FilesMatch "^(\.env.*|\.gitignore|composer\.(json|lock)|README\.md|SECURITY\.md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Bloqueia todos os dot-files (.git, .DS_Store, etc.)
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# -------------------------------------------------------
+# Bloqueia acesso direto a diretorios internos via URL
+# -------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Bloqueia acesso HTTP direto a pastas internas
+    RewriteRule ^(config|modules|vendor|scripts)(/|$) - [F,L]
+
+    # Impede acesso direto a conexao.php (backward-compat only)
+    RewriteRule ^conexao\.php$ - [F,L]
+</IfModule>
+
+# -------------------------------------------------------
+# Previne execucao de PHP em eventuais pastas de upload
+# -------------------------------------------------------
+<IfModule mod_php.c>
+    <FilesMatch "\.php$">
+        # Mantém PHP ativo apenas onde necessário
+    </FilesMatch>
+</IfModule>
+
+# -------------------------------------------------------
+# Remove headers que revelam versao do servidor
+# ServerTokens e ServerSignature so podem ser definidos
+# em httpd.conf, nao aqui. Mas podemos remover X-Powered-By.
+# -------------------------------------------------------
+<IfModule mod_headers.c>
+    Header unset X-Powered-By
+    Header always unset X-Powered-By
+</IfModule>

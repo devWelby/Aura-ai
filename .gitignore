@@ -1,0 +1,82 @@
+# -------------------------------------------------------
+# DEPENDENCIAS
+# -------------------------------------------------------
+/vendor/
+composer.phar
+
+# -------------------------------------------------------
+# SEGREDOS E VARIAVEIS DE AMBIENTE (NUNCA subir ao git)
+# -------------------------------------------------------
+.env
+.env.local
+.env.production
+.env.staging
+*.key
+*.pem
+*.p12
+*.pfx
+*_rsa
+*_dsa
+*_ecdsa
+*_ed25519
+
+# -------------------------------------------------------
+# DADOS SENSIVEIS (uploads, dumps, extratos)
+# -------------------------------------------------------
+/uploads/
+/storage/
+*.sql
+*.sql.gz
+*.dump
+*.bak
+*.csv
+*.xlsx
+*.xls
+*.pdf
+
+# -------------------------------------------------------
+# LOGS DE SISTEMA E ERROS
+# -------------------------------------------------------
+*.log
+error_log
+php_errors.log
+access_log
+
+# -------------------------------------------------------
+# SISTEMA OPERACIONAL
+# -------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# -------------------------------------------------------
+# IDES E EDITORES
+# -------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+nbproject/
+
+# -------------------------------------------------------
+# DEPLOY E BUILD
+# -------------------------------------------------------
+/dist/
+/build/
+/.cache/
+node_modules/
+
+# -------------------------------------------------------
+# ARQUIVOS DE SESSAO PHP (se salvar em disco)
+# -------------------------------------------------------
+/sessions/
+sess_*

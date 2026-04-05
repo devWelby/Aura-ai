@@ -50,11 +50,11 @@
       </div>
     </div>
   <% } else if (isLogged && planoUsuario === 'pro') { %>
-    <div class="soft-card" style="margin-bottom: 20px; background: linear-gradient(135deg, #ebfff1, #d8f6e3); border-color: #b8e2c7;">
+    <div class="soft-card pro-banner" style="margin-bottom: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <div>
-          <div style="font-weight: 700; color: #1b5e20;">Plano Pro ativo</div>
-          <div style="font-size: 13px; color: #2a6b3a;">Analises ilimitadas e historico completo.</div>
+          <div class="pro-banner-title" style="font-weight: 700;">Plano Pro ativo</div>
+          <div class="pro-banner-text" style="font-size: 13px;">Analises ilimitadas e historico completo.</div>
         </div>
         <span class="chip chip-success">Ilimitado</span>
       </div>
@@ -119,7 +119,7 @@
       </div>
     </form>
   <% } else { %>
-    <div style="border: 2px dashed var(--danger); padding: 40px; border-radius: 12px; margin-bottom: 20px; background: #fff; text-align: center;">
+    <div style="border: 2px dashed var(--danger); padding: 40px; border-radius: 12px; margin-bottom: 20px; background: var(--card-bg); text-align: center;">
       <h3 style="color: var(--danger);">Seu limite gratuito acabou</h3>
       <p>Para continuar analisando seus gastos com IA, libere o acesso ilimitado.</p>
       <a href="<%= appUrl %>/planos.php" class="btn" style="background: var(--success); width: auto; margin-top: 15px;">Ver Planos e Assinar</a>

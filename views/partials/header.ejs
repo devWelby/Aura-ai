@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= pageTitle || 'Aura-Ai' %></title>
   <link rel="stylesheet" href="<%= appUrl %>/assets/css/style.css">
-  <script nonce="<%= cspNonce %>" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <% if (showAds && adsenseClientId) { %>
     <script nonce="<%= cspNonce %>" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<%= adsenseClientId %>" crossorigin="anonymous"></script>
   <% } %>

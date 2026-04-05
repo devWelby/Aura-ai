@@ -21,35 +21,24 @@ const paymentRouter = require('./routes/payments');
 const pool = require('./config/db');
 const { checkFirebaseHealth } = require('./config/firebase');
 
-function cspDirectives(req, res) {
-  const nonce = `'nonce-${res.locals.cspNonce}'`;
-  const directives = {
-    defaultSrc: ["'self'"],
-    baseUri: ["'self'"],
-    frameAncestors: ["'none'"],
-    objectSrc: ["'none'"],
-    scriptSrc: [
-      "'self'",
-      nonce,
-      'https://cdn.jsdelivr.net',
-      'https://cdnjs.cloudflare.com',
-      'https://pagead2.googlesyndication.com',
-    ],
-    styleSrc: ["'self'", "'unsafe-inline'"],
-    imgSrc: ["'self'", 'data:', 'https:'],
-    fontSrc: ["'self'", 'data:', 'https:'],
-    connectSrc: ["'self'", 'https://pagead2.googlesyndication.com'],
-    frameSrc: ["'self'", 'https://googleads.g.doubleclick.net'],
-    formAction: ["'self'"],
-    upgradeInsecureRequests: [],
-  };
-
-  if (appEnv !== 'production') {
-    delete directives.upgradeInsecureRequests;
-  }
-
-  return directives;
-}
+const cspDirectives = {
+  defaultSrc: ["'self'"],
+  baseUri: ["'self'"],
+  frameAncestors: ["'none'"],
+  objectSrc: ["'none'"],
+  scriptSrc: [
+    "'self'",
+    (req, res) => `'nonce-${res.locals.cspNonce}'`,
+    'https://pagead2.googlesyndication.com',
+  ],
+  styleSrc: ["'self'", "'unsafe-inline'"],
+  imgSrc: ["'self'", 'data:', 'https:'],
+  fontSrc: ["'self'", 'data:', 'https:'],
+  connectSrc: ["'self'", 'https://pagead2.googlesyndication.com'],
+  frameSrc: ["'self'", 'https://googleads.g.doubleclick.net'],
+  formAction: ["'self'"],
+  ...(appEnv === 'production' ? { upgradeInsecureRequests: [] } : {}),
+};
 
 function createApp(options = {}) {
   const {
@@ -180,6 +169,8 @@ function createApp(options = {}) {
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, '..', 'views'));
   app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
+  app.use('/vendor/chart.js', express.static(path.join(__dirname, '..', 'node_modules', 'chart.js', 'dist')));
+  app.use('/vendor/html2pdf.js', express.static(path.join(__dirname, '..', 'node_modules', 'html2pdf.js', 'dist')));
 
   app.use((req, res, next) => {
     res.locals.session = req.session;

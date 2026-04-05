@@ -1,12 +1,11 @@
 <%- include('../partials/header') %>
 
-<script nonce="<%= cspNonce %>" src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="<%= appUrl %>/vendor/chart.js/chart.umd.min.js" defer></script>
+<script src="<%= appUrl %>/vendor/html2pdf.js/html2pdf.bundle.min.js" defer></script>
 
 <div
   class="container"
   id="conteudo-pdf"
-  data-chart-labels="<%= labelsChart %>"
-  data-chart-values="<%= valoresChart %>"
   data-filename-stem="Diagnostico_Financeiro_<%= String(mesReferencia).replace('/', '_') %>"
 >
   <div class="top-bar">
@@ -21,7 +20,7 @@
         <a href="<%= appUrl %>/historico.php" class="btn btn-secondary" style="width: auto; padding: 8px 15px;">Historico</a>
       <% } %>
       <button id="printReportBtn" class="btn btn-secondary" style="width: auto; padding: 8px 15px;">Imprimir</button>
-      <button id="downloadPdfBtn" class="btn" style="width: auto; background: #333; padding: 8px 15px;">Baixar PDF</button>
+      <button id="downloadPdfBtn" class="btn" style="width: auto; background: var(--text-main); color: var(--card-bg); padding: 8px 15px;">Baixar PDF</button>
     </div>
   </div>
 
@@ -138,7 +137,7 @@
       <div style="min-height:300px; position:relative; margin-bottom: 10px;"><canvas id="graficoDespesas"></canvas></div>
       <ul style="list-style:none; margin:0; padding:0;">
         <% gastosPorCategoria.forEach(([categoria, valor]) => { const percentual = totalSaidas > 0 ? (valor / totalSaidas) * 100 : 0; %>
-          <li style="padding:8px 0; border-bottom: 1px solid #f1f1f1;">
+          <li style="padding:8px 0; border-bottom: 1px solid var(--border-color);">
             <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:6px;">
               <strong><%= categoria %></strong>
               <span>R$ <%= Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></span>
@@ -156,7 +155,7 @@
       <% if (entradasOrdenadas && entradasOrdenadas.length > 0) { %>
         <ul style="list-style:none; margin:0; padding:0;">
           <% entradasOrdenadas.forEach(([categoria, valor]) => { const percentual = totalEntradas > 0 ? (valor / totalEntradas) * 100 : 0; %>
-            <li style="padding:8px 0; border-bottom: 1px solid #f1f1f1;">
+            <li style="padding:8px 0; border-bottom: 1px solid var(--border-color);">
               <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:6px;">
                 <strong><%= categoria %></strong>
                 <span>R$ <%= Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></span>
@@ -233,7 +232,7 @@
       </ul>
     </div>
 
-    <div class="soft-card" style="background: #f7fbff; border-color: #d8e8ff;">
+    <div class="soft-card info-panel">
       <p class="section-title">Plano de Acao Prioritario</p>
       <% if (dados.dicas && dados.dicas.length) { %>
         <ul class="insights-list">
@@ -253,64 +252,9 @@
   </div>
 </div>
 
-<script nonce="<%= cspNonce %>">
-  const reportContainer = document.getElementById('conteudo-pdf');
-  const rawLabels = JSON.parse(reportContainer?.getAttribute('data-chart-labels') || '[]');
-  const rawData = JSON.parse(reportContainer?.getAttribute('data-chart-values') || '[]');
-
-  if (rawLabels.length > 0) {
-    const ctx = document.getElementById('graficoDespesas').getContext('2d');
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: rawLabels,
-        datasets: [{
-          data: rawData,
-          backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#EA6A47','#A5D8DD','#5E92F3'],
-          borderWidth: 2,
-          borderColor: '#ffffff',
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom' } },
-        cutout: '65%',
-      },
-    });
-  }
-
-  document.querySelectorAll('.dynamic-width[data-width]').forEach((element) => {
-    const value = Number.parseFloat(element.getAttribute('data-width') || '0');
-    element.style.width = `${Math.max(0, Math.min(100, value))}%`;
-  });
-
-  function gerarPDF() {
-    const element = document.getElementById('conteudo-pdf');
-    const filenameStem = element?.getAttribute('data-filename-stem') || 'Diagnostico_Financeiro';
-    html2pdf().set({
-      margin: 10,
-      filename: `${filenameStem}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    }).from(element).save();
-  }
-
-  const printReportBtn = document.getElementById('printReportBtn');
-  if (printReportBtn) {
-    printReportBtn.addEventListener('click', () => {
-      window.print();
-    });
-  }
-
-  const downloadPdfBtn = document.getElementById('downloadPdfBtn');
-  if (downloadPdfBtn) {
-    downloadPdfBtn.addEventListener('click', () => {
-      gerarPDF();
-    });
-  }
-</script>
+<textarea id="chart-labels-json" hidden><%- labelsChart %></textarea>
+<textarea id="chart-values-json" hidden><%- valoresChart %></textarea>
+<script src="<%= appUrl %>/assets/js/report-view.js" defer></script>
 
 <style>
   .saldo-final-positivo { color: var(--success); }

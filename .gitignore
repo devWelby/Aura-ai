@@ -59,6 +59,7 @@ coverage/
 dist/
 build/
 .cache/
+.netlify/
 
 # ------------------------------
 # OS files

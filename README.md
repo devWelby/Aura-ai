@@ -35,6 +35,35 @@ npm run dev
 
 ## Deploy
 
+### Netlify (para testes com amigos)
+
+Este projeto foi preparado para rodar na Netlify usando Functions (Express serverless).
+
+Arquivos de deploy:
+
+- `netlify.toml`
+- `netlify/functions/app.js`
+
+Passos:
+
+1. Suba o repositorio no GitHub.
+2. Na Netlify: `Add new site` -> `Import an existing project` -> selecione o repositorio.
+3. Em `Site configuration` -> `Environment variables`, configure as variaveis do `.env` (sem commitar segredos).
+4. Ajuste obrigatoriamente:
+	- `APP_ENV=production`
+	- `APP_URL=https://SEU-SITE.netlify.app`
+	- `URL_BASE=https://SEU-SITE.netlify.app`
+	- `DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASS` para um MySQL remoto (localhost nao funciona na Netlify)
+	- `SESSION_SECRET` e `COOKIE_SIGNING_SECRET`
+5. Deploy.
+
+Observacoes importantes:
+
+- Google OAuth: em `Authorized redirect URIs`, inclua `https://SEU-SITE.netlify.app/callback_google.php`.
+- Stripe Webhook: aponte para `https://SEU-SITE.netlify.app/webhook.php`.
+- Firebase Admin: use `FIREBASE_SERVICE_ACCOUNT_JSON` (inline) em producao.
+- Upload em Functions funciona para testes, mas workloads maiores podem exigir plataforma de servidor dedicado.
+
 ### PM2
 
 ```bash

@@ -14,7 +14,7 @@
     "verify": "npm run check && npm test",
     "verify:firebase": "npm run verify && npm run firebase:check",
     "firebase:check": "node scripts/dev/firebase-check.js",
-    "test:http": "node --test tests/http/**/*.test.js",
+    "test:http": "node --test tests/http/*.test.js",
     "test": "npm run test:http",
     "healthcheck": "node scripts/prod/healthcheck.js",
     "start:prod": "pm2-runtime ecosystem.config.js --env production",

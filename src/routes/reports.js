@@ -295,6 +295,17 @@ router.post(['/processar_upload.php', '/relatorios/processar-upload'], uploadLim
     return res.status(400).send('Formato invalido. Envie apenas PDF, CSV ou XLSX.');
   }
 
+  const mime = String(req.file.mimetype || '').toLowerCase();
+  const allowedMimeByExt = {
+    pdf: ['application/pdf'],
+    csv: ['text/csv', 'application/csv', 'text/plain', 'application/vnd.ms-excel'],
+    xlsx: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+  };
+  const allowedMimes = allowedMimeByExt[ext] || [];
+  if (mime && !allowedMimes.includes(mime) && mime !== 'application/octet-stream') {
+    return res.status(400).send('Tipo de arquivo invalido para a extensao enviada.');
+  }
+
   const prompt = buildPrompt();
   const parts = [{ text: prompt }];
 

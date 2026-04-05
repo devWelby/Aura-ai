@@ -1,6 +1,6 @@
 <%- include('../partials/header') %>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script nonce="<%= cspNonce %>" src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <div
   class="container"
@@ -20,8 +20,8 @@
       <% } else { %>
         <a href="<%= appUrl %>/historico.php" class="btn btn-secondary" style="width: auto; padding: 8px 15px;">Historico</a>
       <% } %>
-      <button onclick="window.print()" class="btn btn-secondary" style="width: auto; padding: 8px 15px;">Imprimir</button>
-      <button onclick="gerarPDF()" class="btn" style="width: auto; background: #333; padding: 8px 15px;">Baixar PDF</button>
+      <button id="printReportBtn" class="btn btn-secondary" style="width: auto; padding: 8px 15px;">Imprimir</button>
+      <button id="downloadPdfBtn" class="btn" style="width: auto; background: #333; padding: 8px 15px;">Baixar PDF</button>
     </div>
   </div>
 
@@ -253,7 +253,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="<%= cspNonce %>">
   const reportContainer = document.getElementById('conteudo-pdf');
   const rawLabels = JSON.parse(reportContainer?.getAttribute('data-chart-labels') || '[]');
   const rawData = JSON.parse(reportContainer?.getAttribute('data-chart-values') || '[]');
@@ -295,6 +295,20 @@
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     }).from(element).save();
+  }
+
+  const printReportBtn = document.getElementById('printReportBtn');
+  if (printReportBtn) {
+    printReportBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+  if (downloadPdfBtn) {
+    downloadPdfBtn.addEventListener('click', () => {
+      gerarPDF();
+    });
   }
 </script>
 

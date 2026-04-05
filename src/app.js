@@ -1,6 +1,7 @@
 require('./config/env');
 
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
 const session = require('express-session');
 const MySQLStoreFactory = require('express-mysql-session');
@@ -19,6 +20,36 @@ const reportRouter = require('./routes/reports');
 const paymentRouter = require('./routes/payments');
 const pool = require('./config/db');
 const { checkFirebaseHealth } = require('./config/firebase');
+
+function cspDirectives(req, res) {
+  const nonce = `'nonce-${res.locals.cspNonce}'`;
+  const directives = {
+    defaultSrc: ["'self'"],
+    baseUri: ["'self'"],
+    frameAncestors: ["'none'"],
+    objectSrc: ["'none'"],
+    scriptSrc: [
+      "'self'",
+      nonce,
+      'https://cdn.jsdelivr.net',
+      'https://cdnjs.cloudflare.com',
+      'https://pagead2.googlesyndication.com',
+    ],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    imgSrc: ["'self'", 'data:', 'https:'],
+    fontSrc: ["'self'", 'data:', 'https:'],
+    connectSrc: ["'self'", 'https://pagead2.googlesyndication.com'],
+    frameSrc: ["'self'", 'https://googleads.g.doubleclick.net'],
+    formAction: ["'self'"],
+    upgradeInsecureRequests: [],
+  };
+
+  if (appEnv !== 'production') {
+    delete directives.upgradeInsecureRequests;
+  }
+
+  return directives;
+}
 
 function createApp(options = {}) {
   const {
@@ -73,7 +104,31 @@ function createApp(options = {}) {
   }
 
   app.disable('x-powered-by');
-  app.use(helmet({ contentSecurityPolicy: false }));
+  app.use((req, res, next) => {
+    res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+    next();
+  });
+
+  app.use(helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: cspDirectives,
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: 'same-origin' },
+    crossOriginResourcePolicy: { policy: 'same-site' },
+    hsts: appEnv === 'production'
+      ? {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      }
+      : false,
+    noSniff: true,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    permittedCrossDomainPolicies: { permittedPolicies: 'none' },
+    frameguard: { action: 'deny' },
+  }));
   app.use(hpp());
   app.use(securityShield);
   app.use(globalLimiter);
@@ -89,7 +144,22 @@ function createApp(options = {}) {
   app.use(cookieParser());
 
   const sessionConfig = {
-    secret: process.env.SESSION_SECRET || process.env.COOKIE_SIGNING_SECRET || 'aura-ai-dev-secret',
+    secret: (() => {
+      const sessionSecret = String(process.env.SESSION_SECRET || '').trim();
+      const cookieSecret = String(process.env.COOKIE_SIGNING_SECRET || '').trim();
+      if (sessionSecret) {
+        return sessionSecret;
+      }
+      if (cookieSecret) {
+        return cookieSecret;
+      }
+
+      // Avoid fixed fallback secrets in local/dev environments.
+      return crypto
+        .createHash('sha256')
+        .update(`${Date.now()}:${process.pid}:${Math.random()}`)
+        .digest('hex');
+    })(),
     resave: false,
     saveUninitialized: false,
     cookie: {

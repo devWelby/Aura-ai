@@ -12,12 +12,14 @@ pnpm-debug.log*
 # Environment and secrets
 # ------------------------------
 .env
-.env.local
-.env.production
-.env.staging
+.env.*
+!.env.example
+*.local
+*.secret
 firebase-service-account*.json
 serviceAccountKey*.json
 config/certs/firebase-admin.json
+config/certs/*.json
 *.key
 *.pem
 *.p12
@@ -44,10 +46,10 @@ pids/
 uploads/
 storage/
 tmp/
-*.sql
 *.sql.gz
 *.dump
 *.bak
+*.backup.sql
 
 # ------------------------------
 # Coverage and build outputs
@@ -82,3 +84,8 @@ desktop.ini
 .classpath
 .settings/
 nbproject/
+
+# ------------------------------
+# Legacy/dependency artifacts
+# ------------------------------
+vendor/

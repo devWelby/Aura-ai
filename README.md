@@ -23,8 +23,11 @@ npm run dev
 - Rodar app local: npm run dev
 - Rodar app modo normal: npm start
 - Check de sintaxe: npm run check
+- Auditoria de segredos (arquivos rastreados): npm run audit:secrets
 - Testes HTTP: npm test
 - Verificacao padrao (check + testes): npm run verify
+- Verificacao pre-push (audit + verify): npm run prepush
+- Instalar hook local pre-push: npm run hooks:install
 - Verificar integracao Firebase: npm run firebase:check
 - Verificacao completa com Firebase: npm run verify:firebase
 - Suite local completa: powershell -ExecutionPolicy Bypass -File scripts/dev/run-checks.ps1

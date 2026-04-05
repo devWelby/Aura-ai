@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= pageTitle || 'Aura-Ai' %></title>
   <link rel="stylesheet" href="<%= appUrl %>/assets/css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script nonce="<%= cspNonce %>" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <% if (showAds && adsenseClientId) { %>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<%= adsenseClientId %>" crossorigin="anonymous"></script>
+    <script nonce="<%= cspNonce %>" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<%= adsenseClientId %>" crossorigin="anonymous"></script>
   <% } %>
 </head>
 <body>
@@ -15,7 +15,7 @@
     <div class="main-menu">
       <a href="<%= appUrl %>/index.php" class="brand">Analista IA</a>
 
-      <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" onclick="document.body.classList.toggle('menu-open'); this.setAttribute('aria-expanded', document.body.classList.contains('menu-open') ? 'true' : 'false');">
+      <button id="menuToggleBtn" class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">
         Menu
       </button>
 
@@ -46,6 +46,19 @@
     <div class="ad-wrapper">
       <div class="ad-label">Publicidade</div>
       <ins class="adsbygoogle ad-slot ad-slot-header" style="display:block" data-ad-client="<%= adsenseClientId %>" data-ad-slot="<%= adsHeader %>" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      <script nonce="<%= cspNonce %>">(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
   <% } %>
+
+  <script nonce="<%= cspNonce %>">
+    const menuToggleBtn = document.getElementById('menuToggleBtn');
+    if (menuToggleBtn) {
+      menuToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('menu-open');
+        menuToggleBtn.setAttribute(
+          'aria-expanded',
+          document.body.classList.contains('menu-open') ? 'true' : 'false',
+        );
+      });
+    }
+  </script>

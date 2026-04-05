@@ -127,7 +127,7 @@
   <% } %>
 </div>
 
-<script>
+<script nonce="<%= cspNonce %>">
   document.querySelectorAll('.progress-track[data-progress]').forEach((progressTrack) => {
     const fill = progressTrack.querySelector('.progress-fill');
     const value = Number.parseFloat(progressTrack.getAttribute('data-progress') || '0');

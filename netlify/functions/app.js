@@ -1,3 +1,4 @@
+require('ejs');
 const serverless = require('serverless-http');
 const { createApp } = require('../../src/app');
 

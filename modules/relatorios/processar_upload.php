@@ -49,8 +49,8 @@ if ((int) $_SESSION['upload_rate']['count'] > 10) {
     die('Muitas análises em pouco tempo. Tente novamente em alguns minutos.');
 }
 
-$apiKey = $_ENV['GEMINI_API_KEY']; 
-if (!$apiKey) {
+$apiKey = (string) ($_ENV['GEMINI_API_KEY'] ?? '');
+if ($apiKey === '') {
     http_response_code(500);
     die('Serviço indisponível no momento.');
 }
@@ -146,6 +146,11 @@ $dadosRequisicao = [
 ];
 
 $jsonPayload = json_encode($dadosRequisicao);
+if ($jsonPayload === false) {
+    http_response_code(500);
+    die('Falha ao preparar a analise. Tente novamente.');
+}
+
 $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" . $apiKey;
 
 $ch = curl_init($url);
@@ -155,13 +160,21 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonPayload);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+curl_setopt($ch, CURLOPT_TIMEOUT, 90);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
 
 $resposta = curl_exec($ch);
+$httpStatus = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
 if (curl_errno($ch)) {
     curl_close($ch);
     die('Erro na comunicação com o serviço de análise. Tente novamente.');
 }
 curl_close($ch);
+
+if ($httpStatus >= 500) {
+    http_response_code(502);
+    die('Serviço de analise indisponivel no momento. Tente novamente.');
+}
 
 $respostaDecodificada = json_decode($resposta, true);
 if (isset($respostaDecodificada['candidates'][0]['content']['parts'][0]['text'])) {

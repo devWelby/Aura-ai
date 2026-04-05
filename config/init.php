@@ -45,8 +45,10 @@ if (!headers_sent()) {
 
 // Carrega bibliotecas e variáveis de ambiente.
 require_once __DIR__ . '/../vendor/autoload.php';
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+if (class_exists('Dotenv\\Dotenv')) {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+    $dotenv->safeLoad();
+}
 
 // Conexão com banco de dados.
 $host = $_ENV['DB_HOST'] ?? 'localhost';

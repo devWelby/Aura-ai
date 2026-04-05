@@ -27,6 +27,11 @@ try {
             'quantity' => 1,
         ]],
         'mode' => 'subscription',
+        'subscription_data' => [
+            'metadata' => [
+                'usuario_id' => (string) $_SESSION['usuario_id']
+            ]
+        ],
         
         'success_url' => $baseUrl . '/sucesso.php?session_id={CHECKOUT_SESSION_ID}',
         'cancel_url'  => $baseUrl . '/planos.php',

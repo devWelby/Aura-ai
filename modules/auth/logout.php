@@ -3,6 +3,13 @@
 // Usa init.php para garantir os mesmos parametros seguros de sessao
 require_once __DIR__ . '/../../config/init.php';
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: index.php');
+    exit;
+}
+
+validar_csrf_post();
+
 // Limpa todos os dados da sessao atual
 $_SESSION = [];
 

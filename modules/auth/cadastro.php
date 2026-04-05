@@ -14,11 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validar_csrf_post();
 
     $nome = limpar_dado($_POST['nome'] ?? '');
-    $email = limpar_dado($_POST['email'] ?? '');
+    $email = strtolower(limpar_dado($_POST['email'] ?? ''));
     $senha = trim($_POST['senha'] ?? '');
 
     if (empty($nome) || empty($email) || empty($senha)) {
         $erro = "Preencha todos os campos.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $erro = "Informe um e-mail valido.";
     } elseif (strlen($senha) < 8) {
         $erro = "A senha deve ter no minimo 8 caracteres.";
     } elseif (!preg_match('/[A-Z]/', $senha) || !preg_match('/[0-9]/', $senha)) {
@@ -51,7 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $sucesso = "Cadastro realizado! Verifique seu e-mail para ativar a conta antes de fazer login.";
                 } catch (Exception $e) {
-                    $erro = "Conta criada, mas falha ao enviar o e-mail: " . $e->getMessage();
+                    error_log('Falha ao enviar e-mail de verificacao: ' . $e->getMessage());
+                    $sucesso = "Cadastro realizado! Nao foi possivel enviar o e-mail de ativacao agora. Contate o suporte para concluir a ativacao.";
                 }
             } else {
                 $erro = "Erro interno ao cadastrar.";
@@ -86,7 +89,7 @@ require_once __DIR__ . '/../../includes/header.php';
         <input type="email" name="email" required>
         
         <label>Senha</label>
-        <input type="password" name="senha" required minlength="6">
+        <input type="password" name="senha" required minlength="8">
         
         <button type="submit" class="btn" style="background: var(--success);">Criar Conta</button>
     </form>

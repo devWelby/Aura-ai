@@ -1,22 +1,9 @@
 const express = require('express');
 const pool = require('../config/db');
 const { ensureCsrfToken, readSignedFreeUsage, validateCsrfPost } = require('../utils/security');
+const { freeAnalysesRemainingUser } = require('../utils/helpers');
 
 const router = express.Router();
-
-async function freeAnalysesRemainingUser(usuarioId, limit = 2) {
-  if (!usuarioId || limit <= 0) {
-    return 0;
-  }
-
-  const [rows] = await pool.execute(
-    'SELECT COUNT(*) AS total FROM historico_analises WHERE usuario_id = ? AND YEAR(criado_em) = YEAR(CURDATE()) AND MONTH(criado_em) = MONTH(CURDATE())',
-    [usuarioId],
-  );
-
-  const total = Number(rows[0]?.total || 0);
-  return Math.max(0, limit - total);
-}
 
 async function ensureUserPreferencesTable() {
   await pool.execute(
@@ -143,5 +130,4 @@ router.get(['/', '/index.php', '/dashboard'], async (req, res) => {
 
 module.exports = {
   appRouter: router,
-  freeAnalysesRemainingUser,
 };

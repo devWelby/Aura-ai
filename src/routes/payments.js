@@ -86,30 +86,34 @@ router.post(['/webhook.php', '/pagamentos/webhook'], async (req, res) => {
     return res.sendStatus(400);
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const usuarioId = Number.parseInt(String(session.client_reference_id || '0'), 10);
-    const status = String(session.status || '');
-    const paymentStatus = String(session.payment_status || '');
-    const mode = String(session.mode || '');
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const usuarioId = Number.parseInt(String(session.client_reference_id || '0'), 10);
+      const status = String(session.status || '');
+      const paymentStatus = String(session.payment_status || '');
+      const mode = String(session.mode || '');
 
-    if (usuarioId > 0 && status === 'complete' && mode === 'subscription' && ['paid', 'no_payment_required'].includes(paymentStatus)) {
-      await pool.execute("UPDATE usuarios SET plano = 'pro' WHERE id = ?", [usuarioId]);
+      if (usuarioId > 0 && status === 'complete' && mode === 'subscription' && ['paid', 'no_payment_required'].includes(paymentStatus)) {
+        await pool.execute("UPDATE usuarios SET plano = 'pro' WHERE id = ?", [usuarioId]);
+      }
     }
-  }
 
-  if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
-    const subscription = event.data.object;
-    const usuarioId = Number.parseInt(String(subscription.metadata?.usuario_id || '0'), 10);
-    const status = String(subscription.status || '');
+    if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
+      const subscription = event.data.object;
+      const usuarioId = Number.parseInt(String(subscription.metadata?.usuario_id || '0'), 10);
+      const status = String(subscription.status || '');
 
-    if (usuarioId > 0) {
-      const novoPlano = ['active', 'trialing'].includes(status) ? 'pro' : 'gratis';
-      await pool.execute('UPDATE usuarios SET plano = ? WHERE id = ?', [novoPlano, usuarioId]);
+      if (usuarioId > 0) {
+        const novoPlano = ['active', 'trialing'].includes(status) ? 'pro' : 'gratis';
+        await pool.execute('UPDATE usuarios SET plano = ? WHERE id = ?', [novoPlano, usuarioId]);
+      }
     }
-  }
 
-  return res.sendStatus(200);
+    return res.sendStatus(200);
+  } catch (err) {
+    return res.sendStatus(500);
+  }
 });
 
 module.exports = router;

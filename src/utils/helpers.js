@@ -1,3 +1,5 @@
+const pool = require('../config/db');
+
 function sanitize(value) {
   if (value === null || value === undefined) {
     return '';
@@ -61,6 +63,25 @@ function formatCurrency(value) {
   return Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function isWebhookPath(path) {
+  const value = String(path || '');
+  return value === '/webhook.php' || value === '/pagamentos/webhook';
+}
+
+async function freeAnalysesRemainingUser(usuarioId, limit = 2) {
+  if (!usuarioId || limit <= 0) {
+    return 0;
+  }
+
+  const [rows] = await pool.execute(
+    'SELECT COUNT(*) AS total FROM historico_analises WHERE usuario_id = ? AND YEAR(criado_em) = YEAR(CURDATE()) AND MONTH(criado_em) = MONTH(CURDATE())',
+    [usuarioId],
+  );
+
+  const total = Number(rows[0]?.total || 0);
+  return Math.max(0, limit - total);
+}
+
 module.exports = {
   sanitize,
   adsenseClientId,
@@ -68,4 +89,6 @@ module.exports = {
   canShowAds,
   appBaseUrl,
   formatCurrency,
+  isWebhookPath,
+  freeAnalysesRemainingUser,
 };

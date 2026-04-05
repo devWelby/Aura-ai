@@ -1,3 +1,5 @@
+const { isWebhookPath } = require('../utils/helpers');
+
 function parseAllowedHosts() {
   const raw = String(process.env.ALLOWED_HOSTS || '').trim();
   if (!raw) {
@@ -29,11 +31,6 @@ function extractHostFromUrl(value) {
 
 function isMutatingMethod(method) {
   return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(String(method || '').toUpperCase());
-}
-
-function isWebhookPath(path) {
-  const value = String(path || '');
-  return value === '/webhook.php' || value === '/pagamentos/webhook';
 }
 
 function securityShield(req, res, next) {

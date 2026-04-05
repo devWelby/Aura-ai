@@ -6,7 +6,6 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "netlify:dev": "netlify dev",
     "start": "node src/server.js",
     "check": "node --check src/server.js",
     "audit:secrets": "node scripts/dev/secret-audit.js",
@@ -42,7 +41,6 @@
     "mysql2": "^3.14.0",
     "pm2": "^5.4.3",
     "resend": "^4.4.0",
-    "serverless-http": "^4.0.0",
     "stripe": "^17.7.0"
   },
   "devDependencies": {

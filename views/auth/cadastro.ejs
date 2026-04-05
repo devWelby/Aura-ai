@@ -6,11 +6,11 @@
   <% if (erro) { %><div class="msg erro"><%= erro %></div><% } %>
   <% if (sucesso) { %><div class="msg sucesso"><%= sucesso %></div><% } %>
 
-  <a href="/login_google.php" class="btn" style="background:#fff; color:#444; border:1px solid #ddd; margin-bottom:20px;">Continuar com o Google</a>
+  <a href="<%= appUrl %>/login_google.php" class="btn" style="background:#fff; color:#444; border:1px solid #ddd; margin-bottom:20px;">Continuar com o Google</a>
 
   <div style="text-align: center; margin: 15px 0; color: #888; font-size: 14px;">ou use seu e-mail</div>
 
-  <form method="POST" action="/cadastro.php">
+  <form method="POST" action="<%= appUrl %>/cadastro.php">
     <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
 
     <label>Nome Completo</label>
@@ -26,7 +26,7 @@
   </form>
 
   <div style="text-align: center; margin-top: 20px;">
-    <a href="/login.php" style="color: var(--primary); text-decoration: none; font-weight: 600;">Ja tem uma conta? Faca Login</a>
+    <a href="<%= appUrl %>/login.php" style="color: var(--primary); text-decoration: none; font-weight: 600;">Ja tem uma conta? Faca Login</a>
   </div>
 </div>
 

@@ -13,9 +13,9 @@
     <h1 style="margin: 0;">Analise de <%= mesReferencia %></h1>
     <div id="botoes-acao" style="display:flex; gap:10px; align-items:center;">
       <% if (isVisitante) { %>
-        <a href="/planos.php" class="btn" style="width: auto; background: var(--success); padding: 8px 15px;">Criar Conta</a>
+        <a href="<%= appUrl %>/planos.php" class="btn" style="width: auto; background: var(--success); padding: 8px 15px;">Criar Conta</a>
       <% } else { %>
-        <a href="/historico.php" class="btn btn-secondary" style="width: auto; padding: 8px 15px;">Historico</a>
+        <a href="<%= appUrl %>/historico.php" class="btn btn-secondary" style="width: auto; padding: 8px 15px;">Historico</a>
       <% } %>
       <button onclick="gerarPDF()" class="btn" style="width: auto; background: #333; padding: 8px 15px;">Baixar PDF</button>
     </div>

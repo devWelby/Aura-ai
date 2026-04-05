@@ -24,7 +24,9 @@ npm run dev
 - Rodar app modo normal: npm start
 - Check de sintaxe: npm run check
 - Testes HTTP: npm test
+- Verificacao padrao (check + testes): npm run verify
 - Verificar integracao Firebase: npm run firebase:check
+- Verificacao completa com Firebase: npm run verify:firebase
 - Suite local completa: powershell -ExecutionPolicy Bypass -File scripts/dev/run-checks.ps1
 - Suite completa com smoke real: set RUN_FULL=1 ; powershell -ExecutionPolicy Bypass -File scripts/dev/run-checks.ps1
 

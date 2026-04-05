@@ -17,6 +17,7 @@ pnpm-debug.log*
 .env.staging
 firebase-service-account*.json
 serviceAccountKey*.json
+config/certs/firebase-admin.json
 *.key
 *.pem
 *.p12

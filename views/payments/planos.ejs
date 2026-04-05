@@ -16,7 +16,7 @@
 <div class="container" style="max-width: 1000px;">
   <div class="top-bar">
     <h1 style="margin: 0;">Planos e Precos</h1>
-    <a href="/index.php" class="btn btn-secondary" style="width: auto;">Voltar</a>
+    <a href="<%= appUrl %>/index.php" class="btn btn-secondary" style="width: auto;">Voltar</a>
   </div>
 
   <div style="text-align: center; margin-top: 20px;">
@@ -34,7 +34,7 @@
         <li>Exibicao de Anuncios</li>
         <li style="color:#ccc; text-decoration:line-through;">Sem Historico Salvo</li>
       </ul>
-      <a href="/cadastro.php" class="btn btn-secondary">Criar Conta Gratis</a>
+      <a href="<%= appUrl %>/cadastro.php" class="btn btn-secondary">Criar Conta Gratis</a>
     </div>
 
     <div class="plan-card destaque">
@@ -48,7 +48,7 @@
         <li>Historico Salvo na Nuvem</li>
         <li>Dicas de Economia Premium (IA)</li>
       </ul>
-      <form method="POST" action="/checkout.php" style="margin: 0;">
+      <form method="POST" action="<%= appUrl %>/checkout.php" style="margin: 0;">
         <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
         <button type="submit" class="btn" style="border:none; cursor:pointer;">Assinar Agora</button>
       </form>

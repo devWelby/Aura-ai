@@ -35,7 +35,7 @@
     <% } %>
 
     <% if (temAcesso) { %>
-      <form id="uploadForm" action="/processar_upload.php" method="POST" enctype="multipart/form-data">
+      <form id="uploadForm" action="<%= appUrl %>/processar_upload.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
         <div style="border: 2px dashed var(--primary); padding: 40px; border-radius: 12px; margin-bottom: 20px; background: #f8faff;">
           <label for="extrato" style="font-size: 18px;">Selecione seu extrato ou planilha:</label>
@@ -48,7 +48,7 @@
       <div style="border: 2px dashed var(--danger); padding: 40px; border-radius: 12px; margin-bottom: 20px; background: #fff;">
         <h3 style="color: var(--danger);">Seu limite gratuito acabou!</h3>
         <p>Para continuar analisando seus gastos com IA, libere o acesso ilimitado.</p>
-        <a href="/planos.php" class="btn" style="background: var(--success); width: auto; margin-top: 15px;">Ver Planos e Assinar</a>
+        <a href="<%= appUrl %>/planos.php" class="btn" style="background: var(--success); width: auto; margin-top: 15px;">Ver Planos e Assinar</a>
       </div>
     <% } %>
   </div>

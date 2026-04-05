@@ -3,7 +3,7 @@
 <div class="container">
   <div class="top-bar">
     <h1 style="margin: 0;">Meu Historico</h1>
-    <div><a href="/index.php" class="btn" style="width: auto; padding: 10px 20px;">Novo Upload</a></div>
+    <div><a href="<%= appUrl %>/index.php" class="btn" style="width: auto; padding: 10px 20px;">Novo Upload</a></div>
   </div>
 
   <% if (historico && historico.length > 0) { %>
@@ -28,7 +28,7 @@
               <td style="padding: 15px; color: var(--success); font-weight: 600;">R$ <%= Number(item.entradas).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></td>
               <td style="padding: 15px; color: var(--danger); font-weight: 600;">R$ <%= Number(item.saidas).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></td>
               <td class="<%= saldoClass %>" style="padding: 15px; font-weight: 600;">R$ <%= Number(item.saldo).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></td>
-              <td style="padding: 15px; text-align: center;"><a href="/ver_relatorio.php?id=<%= item.id %>" class="btn btn-secondary" style="padding: 8px 15px; font-size: 13px; width: auto;">Abrir</a></td>
+              <td style="padding: 15px; text-align: center;"><a href="<%= appUrl %>/ver_relatorio.php?id=<%= item.id %>" class="btn btn-secondary" style="padding: 8px 15px; font-size: 13px; width: auto;">Abrir</a></td>
             </tr>
           <% }) %>
         </tbody>

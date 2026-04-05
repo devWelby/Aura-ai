@@ -8,6 +8,8 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "check": "node --check src/server.js",
+    "verify": "npm run check && npm test",
+    "verify:firebase": "npm run verify && npm run firebase:check",
     "firebase:check": "node scripts/dev/firebase-check.js",
     "test:http": "node --test tests/http/**/*.test.js",
     "test": "npm run test:http",

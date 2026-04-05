@@ -55,6 +55,7 @@ Passos:
 	- `URL_BASE=https://SEU-SITE.netlify.app`
 	- `DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASS` para um MySQL remoto (localhost nao funciona na Netlify)
 	- `SESSION_SECRET` e `COOKIE_SIGNING_SECRET`
+	- `NETLIFY_USE_MYSQL_SESSIONS=0` (recomendado no inicio para evitar erro 500 em cold start)
 5. Deploy.
 
 Observacoes importantes:

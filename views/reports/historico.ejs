@@ -6,9 +6,79 @@
     <div><a href="<%= appUrl %>/index.php" class="btn" style="width: auto; padding: 10px 20px;">Novo Upload</a></div>
   </div>
 
+  <% const totalRelatorios = historico ? historico.length : 0; %>
+  <% const somaEntradas = (historico || []).reduce((acc, item) => acc + Number(item.entradas || 0), 0); %>
+  <% const somaSaidas = (historico || []).reduce((acc, item) => acc + Number(item.saidas || 0), 0); %>
+  <% const saldoAcumulado = somaEntradas - somaSaidas; %>
+
+  <div class="grid-4" style="margin-bottom: 14px;">
+    <div class="soft-card soft-card-muted">
+      <div class="kpi-label">Relatorios</div>
+      <div class="kpi-value" style="font-size: 18px;"><%= totalRelatorios %></div>
+    </div>
+    <div class="soft-card soft-card-muted">
+      <div class="kpi-label">Entradas acumuladas</div>
+      <div class="kpi-value" style="font-size: 18px; color: var(--success);">R$ <%= somaEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+    </div>
+    <div class="soft-card soft-card-muted">
+      <div class="kpi-label">Saidas acumuladas</div>
+      <div class="kpi-value" style="font-size: 18px; color: var(--danger);">R$ <%= somaSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+    </div>
+    <div class="soft-card soft-card-muted">
+      <div class="kpi-label">Saldo acumulado</div>
+      <div class="kpi-value <%= saldoAcumulado >= 0 ? 'saldo-positivo' : 'saldo-negativo' %>" style="font-size: 18px;">R$ <%= saldoAcumulado.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+    </div>
+  </div>
+
+  <div class="soft-card" style="margin-bottom: 14px; padding: 12px;">
+    <label for="historicoSearch" style="margin-bottom: 6px;">Busca rapida por periodo (MM/AAAA)</label>
+    <input id="historicoSearch" type="text" placeholder="Ex: 03/2026" style="margin: 0;">
+  </div>
+
+  <% if (tendenciaCategoria && tendenciaCategoria.tendenciaCategorias && tendenciaCategoria.tendenciaCategorias.length > 0) { %>
+    <div class="soft-card" style="margin-bottom: 14px;">
+      <p class="section-title">Tendencia por Categoria (<%= tendenciaCategoria.periodoAnterior %> vs <%= tendenciaCategoria.periodoAtual %>)</p>
+      <div style="overflow-x: auto;">
+        <table class="table-clean">
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Mes atual</th>
+              <th>Mes anterior</th>
+              <th>Diferenca</th>
+              <th>Tendencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% tendenciaCategoria.tendenciaCategorias.slice(0, 10).forEach((item) => { %>
+              <tr>
+                <td><strong><%= item.categoria %></strong></td>
+                <td>R$ <%= Number(item.atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></td>
+                <td>R$ <%= Number(item.anterior || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></td>
+                <td class="<%= item.delta <= 0 ? 'saldo-positivo' : 'saldo-negativo' %>">
+                  R$ <%= Number(item.delta || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %>
+                </td>
+                <td>
+                  <% if (item.tendencia === 'caiu') { %>
+                    <span class="chip chip-success">Caiu</span>
+                  <% } else if (item.tendencia === 'subiu') { %>
+                    <span class="chip chip-danger">Subiu</span>
+                  <% } else { %>
+                    <span class="chip chip-primary">Estavel</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">* Tendencia calculada sobre despesas por categoria.</div>
+    </div>
+  <% } %>
+
   <% if (historico && historico.length > 0) { %>
     <div style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+      <table id="historicoTable" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
         <thead>
           <tr>
             <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted); text-transform: uppercase; font-size: 13px;">Data da Analise</th>
@@ -22,7 +92,7 @@
         <tbody>
           <% historico.forEach((item) => { %>
             <% const dt = new Date(item.criado_em); const saldoClass = Number(item.saldo) >= 0 ? 'saldo-positivo' : 'saldo-negativo'; %>
-            <tr style="border-bottom: 1px solid var(--border-color); transition: 0.2s;">
+            <tr style="border-bottom: 1px solid var(--border-color); transition: 0.2s;" data-periodo="<%= item.mes_referencia %>">
               <td style="padding: 15px;"><%= dt.toLocaleString('pt-BR') %></td>
               <td style="padding: 15px; font-weight: 600;"><%= item.mes_referencia %></td>
               <td style="padding: 15px; color: var(--success); font-weight: 600;">R$ <%= Number(item.entradas).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></td>
@@ -45,5 +115,22 @@
     </div>
   <% } %>
 </div>
+
+<script>
+  const historicoSearch = document.getElementById('historicoSearch');
+  const historicoTable = document.getElementById('historicoTable');
+
+  if (historicoSearch && historicoTable) {
+    const rows = Array.from(historicoTable.querySelectorAll('tbody tr'));
+
+    historicoSearch.addEventListener('input', () => {
+      const query = historicoSearch.value.trim().toLowerCase();
+      rows.forEach((row) => {
+        const periodo = String(row.getAttribute('data-periodo') || '').toLowerCase();
+        row.style.display = !query || periodo.includes(query) ? '' : 'none';
+      });
+    });
+  }
+</script>
 
 <%- include('../partials/footer') %>

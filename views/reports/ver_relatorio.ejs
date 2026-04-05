@@ -10,75 +10,246 @@
   data-filename-stem="Diagnostico_Financeiro_<%= String(mesReferencia).replace('/', '_') %>"
 >
   <div class="top-bar">
-    <h1 style="margin: 0;">Analise de <%= mesReferencia %></h1>
+    <div>
+      <h1 style="margin: 0;">Relatorio Financeiro - <%= mesReferencia %></h1>
+      <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Analise consolidada com diagnostico, riscos e plano de acao.</div>
+    </div>
     <div id="botoes-acao" style="display:flex; gap:10px; align-items:center;">
       <% if (isVisitante) { %>
         <a href="<%= appUrl %>/planos.php" class="btn" style="width: auto; background: var(--success); padding: 8px 15px;">Criar Conta</a>
       <% } else { %>
         <a href="<%= appUrl %>/historico.php" class="btn btn-secondary" style="width: auto; padding: 8px 15px;">Historico</a>
       <% } %>
+      <button onclick="window.print()" class="btn btn-secondary" style="width: auto; padding: 8px 15px;">Imprimir</button>
       <button onclick="gerarPDF()" class="btn" style="width: auto; background: #333; padding: 8px 15px;">Baixar PDF</button>
     </div>
   </div>
 
-  <div class="cards" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:30px;">
-    <div class="card" style="flex:1; min-width:220px; background:#f8f9fa; padding:20px; border-radius:8px; text-align:center;">
-      <p>Total de Entradas</p>
-      <h3 style="color: var(--success);">R$ <%= totalEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></h3>
-    </div>
-    <div class="card" style="flex:1; min-width:220px; background:#f8f9fa; padding:20px; border-radius:8px; text-align:center;">
-      <p>Total de Saidas</p>
-      <h3 style="color: var(--danger);">R$ <%= totalSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></h3>
-    </div>
-    <div class="card" style="flex:1; min-width:220px; background:#f8f9fa; padding:20px; border-radius:8px; text-align:center;">
-      <p>Balanco do Mes</p>
-      <h3 class="saldo-final <%= saldoFinal >= 0 ? 'saldo-final-positivo' : 'saldo-final-negativo' %>">R$ <%= saldoFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></h3>
-    </div>
-  </div>
-
-  <div class="mini-cards" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom:20px;">
-    <div style="border:1px solid var(--border-color); border-radius:10px; padding:14px; background:#fff;">
-      <div style="font-size:12px; color: var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Taxa de poupanca</div>
-      <div style="font-size:20px; font-weight:800;"><%= taxaPoupanca.toFixed(1).replace('.', ',') %>%</div>
-    </div>
-    <div style="border:1px solid var(--border-color); border-radius:10px; padding:14px; background:#fff;">
-      <div style="font-size:12px; color: var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Comprometimento da renda</div>
-      <div style="font-size:20px; font-weight:800;"><%= comprometimentoRenda.toFixed(1).replace('.', ',') %>%</div>
-    </div>
-    <div style="border:1px solid var(--border-color); border-radius:10px; padding:14px; background:#fff;">
-      <div style="font-size:12px; color: var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Ticket medio de gasto</div>
-      <div style="font-size:20px; font-weight:800;">R$ <%= ticketMedioSaida.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
-    </div>
-    <div style="border:1px solid var(--border-color); border-radius:10px; padding:14px; background:#fff;">
-      <div style="font-size:12px; color: var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Transacoes no periodo</div>
-      <div style="font-size:20px; font-weight:800;"><%= totalTransacoes %></div>
+  <div class="soft-card" style="margin-bottom: 18px;">
+    <p class="section-title">Resumo Executivo</p>
+    <div class="grid-3">
+      <div class="soft-card soft-card-muted">
+        <div class="kpi-label">Saldo mensal</div>
+        <div class="kpi-value <%= saldoFinal >= 0 ? 'saldo-final-positivo' : 'saldo-final-negativo' %>">R$ <%= saldoFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+      </div>
+      <div class="soft-card soft-card-muted">
+        <div class="kpi-label">Score financeiro</div>
+        <div class="kpi-value"><%= scoreSaude %>/100</div>
+        <% if (faixaSaude === 'Excelente') { %>
+          <span class="chip chip-success"><%= faixaSaude %></span>
+        <% } else if (faixaSaude === 'Estavel') { %>
+          <span class="chip chip-primary"><%= faixaSaude %></span>
+        <% } else if (faixaSaude === 'Atencao') { %>
+          <span class="chip chip-warning"><%= faixaSaude %></span>
+        <% } else { %>
+          <span class="chip chip-danger"><%= faixaSaude %></span>
+        <% } %>
+      </div>
+      <div class="soft-card soft-card-muted">
+        <div class="kpi-label">Economia potencial</div>
+        <div class="kpi-value">R$ <%= economiaPotencial.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Reducao estimada de 10% na principal categoria de gastos.</div>
+      </div>
     </div>
   </div>
 
-  <h2>Distribuicao de Despesas</h2>
-  <div style="display:flex; gap:40px; align-items:center; justify-content:center; margin-bottom:30px; flex-wrap:wrap;">
-    <div style="flex:1; min-width:280px; max-width:420px; min-height:300px; position:relative;"><canvas id="graficoDespesas"></canvas></div>
-    <div style="flex:1; min-width:280px;">
+  <% if (comparativoMensal) { %>
+    <div class="soft-card" style="margin-bottom: 18px;">
+      <p class="section-title">Comparativo Mensal (<%= comparativoMensal.periodoAnterior %> vs <%= comparativoMensal.periodoAtual %>)</p>
+      <div class="grid-3">
+        <div class="soft-card soft-card-muted">
+          <div class="kpi-label">Saldo mes atual</div>
+          <div class="kpi-value <%= comparativoMensal.atual.saldo >= 0 ? 'saldo-final-positivo' : 'saldo-final-negativo' %>" style="font-size: 18px;">R$ <%= Number(comparativoMensal.atual.saldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+        </div>
+        <div class="soft-card soft-card-muted">
+          <div class="kpi-label">Saldo mes anterior</div>
+          <div class="kpi-value <%= comparativoMensal.anterior.saldo >= 0 ? 'saldo-final-positivo' : 'saldo-final-negativo' %>" style="font-size: 18px;">R$ <%= Number(comparativoMensal.anterior.saldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+        </div>
+        <div class="soft-card soft-card-muted">
+          <div class="kpi-label">Variacao de saldo</div>
+          <div class="kpi-value <%= comparativoMensal.deltaSaldo >= 0 ? 'saldo-final-positivo' : 'saldo-final-negativo' %>" style="font-size: 18px;">R$ <%= Number(comparativoMensal.deltaSaldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+            <% if (comparativoMensal.variacaoSaldoPercentual === null) { %>
+              Sem base no mes anterior para percentual.
+            <% } else { %>
+              <%= Number(comparativoMensal.variacaoSaldoPercentual).toFixed(1).replace('.', ',') %>%
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="grid-4" style="margin-bottom: 18px;">
+    <div class="soft-card">
+      <div class="kpi-label">Total de entradas</div>
+      <div class="kpi-value" style="color: var(--success);">R$ <%= totalEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+    </div>
+    <div class="soft-card">
+      <div class="kpi-label">Total de saidas</div>
+      <div class="kpi-value" style="color: var(--danger);">R$ <%= totalSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+    </div>
+    <div class="soft-card">
+      <div class="kpi-label">Taxa de poupanca</div>
+      <div class="kpi-value"><%= taxaPoupanca.toFixed(1).replace('.', ',') %>%</div>
+    </div>
+    <div class="soft-card">
+      <div class="kpi-label">Comprometimento da renda</div>
+      <div class="kpi-value"><%= comprometimentoRenda.toFixed(1).replace('.', ',') %>%</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom: 18px;">
+    <div class="soft-card">
+      <p class="section-title">Saude Financeira</p>
+      <div class="progress-track" style="height: 12px; margin-bottom: 10px;">
+        <div class="progress-fill dynamic-width" data-width="<%= scoreSaude %>"></div>
+      </div>
+      <ul class="insights-list">
+        <li>Transacoes no periodo: <strong><%= totalTransacoes %></strong></li>
+        <li>Ticket medio de gasto: <strong>R$ <%= ticketMedioSaida.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></strong></li>
+        <li>Relação entradas/saidas: <strong><%= runwayMeses.toFixed(2).replace('.', ',') %>x</strong></li>
+        <li>Dependencia da principal categoria: <strong><%= dependenciaTopCategoria.toFixed(1).replace('.', ',') %>%</strong></li>
+      </ul>
+    </div>
+
+    <div class="soft-card">
+      <p class="section-title">Projecao Anual</p>
+      <div class="grid-3">
+        <div class="soft-card soft-card-muted">
+          <div class="kpi-label">Entradas</div>
+          <div style="font-size: 16px; font-weight: 700; color: var(--success);">R$ <%= projecaoAnualEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+        </div>
+        <div class="soft-card soft-card-muted">
+          <div class="kpi-label">Saidas</div>
+          <div style="font-size: 16px; font-weight: 700; color: var(--danger);">R$ <%= projecaoAnualSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+        </div>
+        <div class="soft-card soft-card-muted">
+          <div class="kpi-label">Saldo</div>
+          <div class="<%= projecaoAnualSaldo >= 0 ? 'saldo-final-positivo' : 'saldo-final-negativo' %>" style="font-size: 16px; font-weight: 700;">R$ <%= projecaoAnualSaldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom: 18px;">
+    <div class="soft-card">
+      <p class="section-title">Distribuicao de Despesas</p>
+      <div style="min-height:300px; position:relative; margin-bottom: 10px;"><canvas id="graficoDespesas"></canvas></div>
       <ul style="list-style:none; margin:0; padding:0;">
         <% gastosPorCategoria.forEach(([categoria, valor]) => { const percentual = totalSaidas > 0 ? (valor / totalSaidas) * 100 : 0; %>
-          <li style="padding:12px 15px; border-bottom: 1px solid #f1f1f1; display:flex; justify-content:space-between; gap:10px;">
-            <span><strong><%= categoria %></strong></span>
-            <span>R$ <%= Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %> (<%= percentual.toFixed(1).replace('.', ',') %>%)</span>
+          <li style="padding:8px 0; border-bottom: 1px solid #f1f1f1;">
+            <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:6px;">
+              <strong><%= categoria %></strong>
+              <span>R$ <%= Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></span>
+            </div>
+            <div class="progress-track" style="height: 8px;">
+              <div class="progress-fill dynamic-width" data-width="<%= Math.max(2, Math.min(100, percentual)) %>"></div>
+            </div>
           </li>
         <% }) %>
       </ul>
     </div>
+
+    <div class="soft-card">
+      <p class="section-title">Composicao de Entradas</p>
+      <% if (entradasOrdenadas && entradasOrdenadas.length > 0) { %>
+        <ul style="list-style:none; margin:0; padding:0;">
+          <% entradasOrdenadas.forEach(([categoria, valor]) => { const percentual = totalEntradas > 0 ? (valor / totalEntradas) * 100 : 0; %>
+            <li style="padding:8px 0; border-bottom: 1px solid #f1f1f1;">
+              <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:6px;">
+                <strong><%= categoria %></strong>
+                <span>R$ <%= Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></span>
+              </div>
+              <div class="progress-track" style="height: 8px;">
+                <div class="progress-fill dynamic-width" data-width="<%= Math.max(2, Math.min(100, percentual)) %>"></div>
+              </div>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <p style="color: var(--text-muted);">Nao foram identificadas entradas suficientes para detalhamento.</p>
+      <% } %>
+    </div>
   </div>
 
-  <h2>Plano de Acao (Gerado pela IA)</h2>
-  <div class="dicas" style="background: #e8f0fe; padding: 20px; border-radius: 8px; border-left: 5px solid var(--primary); margin-top: 20px;">
-    <ul>
-      <% if (dados.dicas && dados.dicas.length) { dados.dicas.forEach((dica) => { %>
-        <li><%= dica %></li>
-      <% }) } else { %>
-        <li>Nenhuma dica disponivel neste relatorio.</li>
+  <div class="grid-2" style="margin-bottom: 18px;">
+    <div class="soft-card">
+      <p class="section-title">Top Saidas</p>
+      <% if (topSaidasDetalhes && topSaidasDetalhes.length > 0) { %>
+        <div style="overflow-x: auto;">
+          <table class="table-clean">
+            <thead>
+              <tr><th>Descricao</th><th>Categoria</th><th>Valor</th></tr>
+            </thead>
+            <tbody>
+              <% topSaidasDetalhes.forEach((item) => { %>
+                <tr>
+                  <td><%= item.descricao %></td>
+                  <td><%= item.categoria %></td>
+                  <td style="color: var(--danger); font-weight: 700;">R$ <%= Number(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <p style="color: var(--text-muted);">Sem dados de saida para montar ranking.</p>
       <% } %>
-    </ul>
+    </div>
+
+    <div class="soft-card">
+      <p class="section-title">Top Entradas</p>
+      <% if (topEntradasDetalhes && topEntradasDetalhes.length > 0) { %>
+        <div style="overflow-x: auto;">
+          <table class="table-clean">
+            <thead>
+              <tr><th>Descricao</th><th>Categoria</th><th>Valor</th></tr>
+            </thead>
+            <tbody>
+              <% topEntradasDetalhes.forEach((item) => { %>
+                <tr>
+                  <td><%= item.descricao %></td>
+                  <td><%= item.categoria %></td>
+                  <td style="color: var(--success); font-weight: 700;">R$ <%= Number(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <p style="color: var(--text-muted);">Sem dados de entrada para montar ranking.</p>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="soft-card">
+      <p class="section-title">Diagnostico Rapido</p>
+      <ul class="insights-list">
+        <% diagnosticoRapido.forEach((item) => { %>
+          <li><%= item %></li>
+        <% }) %>
+      </ul>
+    </div>
+
+    <div class="soft-card" style="background: #f7fbff; border-color: #d8e8ff;">
+      <p class="section-title">Plano de Acao Prioritario</p>
+      <% if (dados.dicas && dados.dicas.length) { %>
+        <ul class="insights-list">
+          <% dados.dicas.forEach((dica, index) => { %>
+            <li>
+              <% if (index === 0) { %><span class="chip chip-danger">Alta prioridade</span><% } %>
+              <% if (index === 1) { %><span class="chip chip-warning">Media prioridade</span><% } %>
+              <% if (index > 1) { %><span class="chip chip-primary">Rotina</span><% } %>
+              <div style="margin-top: 6px;"><%= dica %></div>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <p style="color: var(--text-muted);">Nenhuma dica disponivel neste relatorio.</p>
+      <% } %>
+    </div>
   </div>
 </div>
 
@@ -108,6 +279,11 @@
       },
     });
   }
+
+  document.querySelectorAll('.dynamic-width[data-width]').forEach((element) => {
+    const value = Number.parseFloat(element.getAttribute('data-width') || '0');
+    element.style.width = `${Math.max(0, Math.min(100, value))}%`;
+  });
 
   function gerarPDF() {
     const element = document.getElementById('conteudo-pdf');

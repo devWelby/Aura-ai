@@ -10,6 +10,15 @@ const { sanitize, appBaseUrl } = require('../utils/helpers');
 
 const router = express.Router();
 
+function getGoogleRedirectUri(req) {
+  const configured = String(process.env.GOOGLE_REDIRECT_URI || '').trim();
+  if (configured) {
+    return configured.replace(/\/$/, '');
+  }
+
+  return `${appBaseUrl(req)}/callback_google.php`;
+}
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 40,
@@ -23,13 +32,24 @@ router.get(['/login.php', '/auth/login'], (req, res) => {
     return res.redirect('/index.php');
   }
 
+  const googleErrors = {
+    google_cancelado: 'Login com Google cancelado.',
+    google_state_invalido: 'Sessao do Google expirou. Tente novamente.',
+    google_dados_invalidos: 'Nao foi possivel obter seus dados do Google.',
+    google_conta_conflito: 'Este e-mail ja esta vinculado a outra conta Google.',
+    google_falha_autenticacao: 'Falha ao autenticar com Google. Tente novamente.',
+    google_config_invalida: 'Login Google indisponivel: verifique as configuracoes OAuth.',
+  };
+
   const success = req.query.msg === 'conta_ativada'
     ? 'Conta ativada com sucesso! Agora voce pode fazer login.'
     : '';
 
+  const erro = googleErrors[String(req.query.erro || '')] || '';
+
   return res.render('auth/login', {
     pageTitle: 'Login - Analista IA',
-    erro: '',
+    erro,
     sucesso: success,
     csrfToken: ensureCsrfToken(req),
   });
@@ -203,14 +223,21 @@ router.get(['/login_google.php', '/auth/login-google'], (req, res) => {
     return res.redirect('/index.php');
   }
 
+  const clientId = String(process.env.GOOGLE_CLIENT_ID || '').trim();
+  const clientSecret = String(process.env.GOOGLE_CLIENT_SECRET || '').trim();
+  if (!clientId || !clientSecret) {
+    return res.redirect('/login.php?erro=google_config_invalida');
+  }
+
   const state = crypto.randomBytes(32).toString('hex');
   req.session.google_oauth_state = state;
   req.session.google_oauth_state_created_at = Date.now();
+  req.session.google_oauth_redirect_uri = getGoogleRedirectUri(req);
 
   const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI,
+    clientId,
+    clientSecret,
+    req.session.google_oauth_redirect_uri,
   );
 
   const url = oauth2Client.generateAuthUrl({
@@ -231,9 +258,11 @@ router.get(['/callback_google.php', '/auth/callback-google'], async (req, res) =
   const incomingState = String(req.query.state || '');
   const sessionState = String(req.session.google_oauth_state || '');
   const stateCreatedAt = Number(req.session.google_oauth_state_created_at || 0);
+  const redirectUri = String(req.session.google_oauth_redirect_uri || getGoogleRedirectUri(req));
 
   delete req.session.google_oauth_state;
   delete req.session.google_oauth_state_created_at;
+  delete req.session.google_oauth_redirect_uri;
 
   const expired = !stateCreatedAt || Date.now() - stateCreatedAt > 10 * 60 * 1000;
   if (!incomingState || !sessionState || expired || incomingState.length !== sessionState.length) {
@@ -246,10 +275,16 @@ router.get(['/callback_google.php', '/auth/callback-google'], async (req, res) =
   }
 
   try {
+    const clientId = String(process.env.GOOGLE_CLIENT_ID || '').trim();
+    const clientSecret = String(process.env.GOOGLE_CLIENT_SECRET || '').trim();
+    if (!clientId || !clientSecret) {
+      return res.redirect('/login.php?erro=google_config_invalida');
+    }
+
     const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI,
+      clientId,
+      clientSecret,
+      redirectUri,
     );
 
     const { tokens } = await oauth2Client.getToken(String(req.query.code));

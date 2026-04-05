@@ -23,6 +23,157 @@ const uploadLimiter = rateLimit({
   message: 'Muitas analises enviadas neste IP. Tente novamente mais tarde.',
 });
 
+function monthKeyFromDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${date.getFullYear()}-${month}`;
+}
+
+function monthLabelFromKey(key) {
+  if (!/^\d{4}-\d{2}$/.test(String(key || ''))) {
+    return 'N/D';
+  }
+  const [year, month] = key.split('-');
+  return `${month}/${year}`;
+}
+
+function computeMonthWindow(referenceDate = new Date()) {
+  const currentStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1, 0, 0, 0);
+  const nextStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 1, 0, 0, 0);
+  const previousStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - 1, 1, 0, 0, 0);
+
+  return {
+    currentStart,
+    nextStart,
+    previousStart,
+    currentKey: monthKeyFromDate(currentStart),
+    previousKey: monthKeyFromDate(previousStart),
+  };
+}
+
+async function getMonthlyComparison(usuarioId) {
+  const window = computeMonthWindow(new Date());
+
+  const [rows] = await pool.execute(
+    `SELECT
+      DATE_FORMAT(criado_em, '%Y-%m') AS mes,
+      COALESCE(SUM(entradas), 0) AS entradas,
+      COALESCE(SUM(saidas), 0) AS saidas,
+      COALESCE(SUM(saldo), 0) AS saldo
+     FROM historico_analises
+     WHERE usuario_id = ?
+       AND criado_em >= ?
+       AND criado_em < ?
+     GROUP BY DATE_FORMAT(criado_em, '%Y-%m')`,
+    [usuarioId, window.previousStart, window.nextStart],
+  );
+
+  const byMonth = new Map(rows.map((item) => [
+    String(item.mes),
+    {
+      entradas: Number(item.entradas || 0),
+      saidas: Number(item.saidas || 0),
+      saldo: Number(item.saldo || 0),
+    },
+  ]));
+
+  const atual = byMonth.get(window.currentKey) || { entradas: 0, saidas: 0, saldo: 0 };
+  const anterior = byMonth.get(window.previousKey) || { entradas: 0, saidas: 0, saldo: 0 };
+  const deltaSaldo = atual.saldo - anterior.saldo;
+  const variacaoSaldoPercentual = anterior.saldo !== 0 ? (deltaSaldo / Math.abs(anterior.saldo)) * 100 : null;
+
+  return {
+    periodoAtual: monthLabelFromKey(window.currentKey),
+    periodoAnterior: monthLabelFromKey(window.previousKey),
+    atual,
+    anterior,
+    deltaSaldo,
+    variacaoSaldoPercentual,
+  };
+}
+
+async function buildCategoryTrend(usuarioId) {
+  const window = computeMonthWindow(new Date());
+  const [rows] = await pool.execute(
+    `SELECT criado_em, json_completo
+     FROM historico_analises
+     WHERE usuario_id = ?
+       AND criado_em >= ?
+       AND criado_em < ?
+     ORDER BY criado_em DESC`,
+    [usuarioId, window.previousStart, window.nextStart],
+  );
+
+  const despesasAtual = {};
+  const despesasAnterior = {};
+
+  for (const row of rows) {
+    const key = monthKeyFromDate(row.criado_em);
+    const target = key === window.currentKey ? despesasAtual : key === window.previousKey ? despesasAnterior : null;
+    if (!target) {
+      continue;
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(String(row.json_completo || '{}'));
+    } catch (err) {
+      parsed = {};
+    }
+
+    const transacoes = Array.isArray(parsed.transacoes) ? parsed.transacoes : [];
+    for (const item of transacoes) {
+      if (!item || typeof item !== 'object') {
+        continue;
+      }
+      if (String(item.tipo || '') !== 'saida') {
+        continue;
+      }
+
+      const categoria = String(item.categoria || 'Outros').trim() || 'Outros';
+      const valor = Math.max(0, Number(item.valor || 0));
+      target[categoria] = Number(target[categoria] || 0) + valor;
+    }
+  }
+
+  const categorias = new Set([
+    ...Object.keys(despesasAtual),
+    ...Object.keys(despesasAnterior),
+  ]);
+
+  const tendenciaCategorias = Array.from(categorias).map((categoria) => {
+    const atual = Number(despesasAtual[categoria] || 0);
+    const anterior = Number(despesasAnterior[categoria] || 0);
+    const delta = atual - anterior;
+    let tendencia = 'estavel';
+    if (delta > 0.01) {
+      tendencia = 'subiu';
+    } else if (delta < -0.01) {
+      tendencia = 'caiu';
+    }
+
+    const variacaoPercentual = anterior > 0 ? (delta / anterior) * 100 : null;
+
+    return {
+      categoria,
+      atual,
+      anterior,
+      delta,
+      tendencia,
+      variacaoPercentual,
+    };
+  }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+
+  return {
+    periodoAtual: monthLabelFromKey(window.currentKey),
+    periodoAnterior: monthLabelFromKey(window.previousKey),
+    tendenciaCategorias,
+  };
+}
+
 function parseGeminiJson(text) {
   let cleaned = String(text || '')
     .replace(/```json\s*/gi, '')
@@ -397,6 +548,34 @@ router.get(['/ver_relatorio.php', '/relatorios/ver'], async (req, res) => {
     .sort((a, b) => b.valor - a.valor)
     .slice(0, 8);
 
+  const entradasOrdenadas = Object.entries(entradasPorCategoria).sort((a, b) => b[1] - a[1]);
+
+  const topEntradasDetalhes = dados.transacoes
+    .filter((t) => t && String(t.tipo || '') === 'entrada')
+    .map((t) => ({
+      descricao: String(t.descricao || 'Sem descricao'),
+      categoria: String(t.categoria || 'Outros'),
+      valor: Math.max(0, Number(t.valor || 0)),
+    }))
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 8);
+
+  let faixaSaude = 'Excelente';
+  if (scoreSaude < 80) {
+    faixaSaude = 'Estavel';
+  }
+  if (scoreSaude < 60) {
+    faixaSaude = 'Atencao';
+  }
+  if (scoreSaude < 40) {
+    faixaSaude = 'Critico';
+  }
+
+  const economiaPotencial = topCategoriaValor * 0.1;
+  const comparativoMensal = isVisitante
+    ? null
+    : await getMonthlyComparison(Number(req.session.usuario_id));
+
   const diagnosticoRapido = [];
   if (saldoFinal < 0) {
     diagnosticoRapido.push('Seu mes fechou no negativo. Corte despesas variaveis e renegocie contas fixas.');
@@ -440,6 +619,11 @@ router.get(['/ver_relatorio.php', '/relatorios/ver'], async (req, res) => {
     maiorTransacaoSaida,
     maiorTransacaoEntrada,
     topSaidasDetalhes,
+    entradasOrdenadas,
+    topEntradasDetalhes,
+    faixaSaude,
+    economiaPotencial,
+    comparativoMensal,
     diagnosticoRapido,
   });
 });
@@ -450,9 +634,12 @@ router.get(['/historico.php', '/relatorios/historico'], requireAuth, async (req,
     [req.session.usuario_id],
   );
 
+  const tendenciaCategoria = await buildCategoryTrend(Number(req.session.usuario_id));
+
   return res.render('reports/historico', {
     pageTitle: 'Meu Historico - Analista IA',
     historico,
+    tendenciaCategoria,
   });
 });
 

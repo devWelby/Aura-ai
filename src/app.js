@@ -10,6 +10,7 @@ const helmet = require('helmet');
 const hpp = require('hpp');
 const { appEnv } = require('./config/env');
 const sessionSecurity = require('./middleware/sessionSecurity');
+const securityShield = require('./middleware/securityShield');
 const { adsenseClientId, adsenseSlot, canShowAds, appBaseUrl } = require('./utils/helpers');
 const { ensureCsrfToken } = require('./utils/security');
 const authRouter = require('./routes/auth');
@@ -74,6 +75,7 @@ function createApp(options = {}) {
   app.disable('x-powered-by');
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(hpp());
+  app.use(securityShield);
   app.use(globalLimiter);
   app.use(express.urlencoded({ extended: true, limit: '6mb' }));
   app.use(express.json({

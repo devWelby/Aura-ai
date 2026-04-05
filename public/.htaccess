@@ -1,9 +1,0 @@
-RewriteEngine On
-
-# Keep static assets direct if they exist under /public
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-
-# Route everything else to front controller
-RewriteRule ^ index.php [L,QSA]

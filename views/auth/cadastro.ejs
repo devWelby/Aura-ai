@@ -1,0 +1,33 @@
+<%- include('../partials/header') %>
+
+<div class="container container-small">
+  <h2 style="text-align: center;">Criar Conta</h2>
+
+  <% if (erro) { %><div class="msg erro"><%= erro %></div><% } %>
+  <% if (sucesso) { %><div class="msg sucesso"><%= sucesso %></div><% } %>
+
+  <a href="/login_google.php" class="btn" style="background:#fff; color:#444; border:1px solid #ddd; margin-bottom:20px;">Continuar com o Google</a>
+
+  <div style="text-align: center; margin: 15px 0; color: #888; font-size: 14px;">ou use seu e-mail</div>
+
+  <form method="POST" action="/cadastro.php">
+    <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
+
+    <label>Nome Completo</label>
+    <input type="text" name="nome" required>
+
+    <label>E-mail</label>
+    <input type="email" name="email" required>
+
+    <label>Senha</label>
+    <input type="password" name="senha" required minlength="8">
+
+    <button type="submit" class="btn" style="background: var(--success);">Criar Conta</button>
+  </form>
+
+  <div style="text-align: center; margin-top: 20px;">
+    <a href="/login.php" style="color: var(--primary); text-decoration: none; font-weight: 600;">Ja tem uma conta? Faca Login</a>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

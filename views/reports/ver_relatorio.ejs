@@ -1,0 +1,130 @@
+<%- include('../partials/header') %>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<div
+  class="container"
+  id="conteudo-pdf"
+  data-chart-labels="<%= labelsChart %>"
+  data-chart-values="<%= valoresChart %>"
+  data-filename-stem="Diagnostico_Financeiro_<%= String(mesReferencia).replace('/', '_') %>"
+>
+  <div class="top-bar">
+    <h1 style="margin: 0;">Analise de <%= mesReferencia %></h1>
+    <div id="botoes-acao" style="display:flex; gap:10px; align-items:center;">
+      <% if (isVisitante) { %>
+        <a href="/planos.php" class="btn" style="width: auto; background: var(--success); padding: 8px 15px;">Criar Conta</a>
+      <% } else { %>
+        <a href="/historico.php" class="btn btn-secondary" style="width: auto; padding: 8px 15px;">Historico</a>
+      <% } %>
+      <button onclick="gerarPDF()" class="btn" style="width: auto; background: #333; padding: 8px 15px;">Baixar PDF</button>
+    </div>
+  </div>
+
+  <div class="cards" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:30px;">
+    <div class="card" style="flex:1; min-width:220px; background:#f8f9fa; padding:20px; border-radius:8px; text-align:center;">
+      <p>Total de Entradas</p>
+      <h3 style="color: var(--success);">R$ <%= totalEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></h3>
+    </div>
+    <div class="card" style="flex:1; min-width:220px; background:#f8f9fa; padding:20px; border-radius:8px; text-align:center;">
+      <p>Total de Saidas</p>
+      <h3 style="color: var(--danger);">R$ <%= totalSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></h3>
+    </div>
+    <div class="card" style="flex:1; min-width:220px; background:#f8f9fa; padding:20px; border-radius:8px; text-align:center;">
+      <p>Balanco do Mes</p>
+      <h3 class="saldo-final <%= saldoFinal >= 0 ? 'saldo-final-positivo' : 'saldo-final-negativo' %>">R$ <%= saldoFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></h3>
+    </div>
+  </div>
+
+  <div class="mini-cards" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom:20px;">
+    <div style="border:1px solid var(--border-color); border-radius:10px; padding:14px; background:#fff;">
+      <div style="font-size:12px; color: var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Taxa de poupanca</div>
+      <div style="font-size:20px; font-weight:800;"><%= taxaPoupanca.toFixed(1).replace('.', ',') %>%</div>
+    </div>
+    <div style="border:1px solid var(--border-color); border-radius:10px; padding:14px; background:#fff;">
+      <div style="font-size:12px; color: var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Comprometimento da renda</div>
+      <div style="font-size:20px; font-weight:800;"><%= comprometimentoRenda.toFixed(1).replace('.', ',') %>%</div>
+    </div>
+    <div style="border:1px solid var(--border-color); border-radius:10px; padding:14px; background:#fff;">
+      <div style="font-size:12px; color: var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Ticket medio de gasto</div>
+      <div style="font-size:20px; font-weight:800;">R$ <%= ticketMedioSaida.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></div>
+    </div>
+    <div style="border:1px solid var(--border-color); border-radius:10px; padding:14px; background:#fff;">
+      <div style="font-size:12px; color: var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Transacoes no periodo</div>
+      <div style="font-size:20px; font-weight:800;"><%= totalTransacoes %></div>
+    </div>
+  </div>
+
+  <h2>Distribuicao de Despesas</h2>
+  <div style="display:flex; gap:40px; align-items:center; justify-content:center; margin-bottom:30px; flex-wrap:wrap;">
+    <div style="flex:1; min-width:280px; max-width:420px; min-height:300px; position:relative;"><canvas id="graficoDespesas"></canvas></div>
+    <div style="flex:1; min-width:280px;">
+      <ul style="list-style:none; margin:0; padding:0;">
+        <% gastosPorCategoria.forEach(([categoria, valor]) => { const percentual = totalSaidas > 0 ? (valor / totalSaidas) * 100 : 0; %>
+          <li style="padding:12px 15px; border-bottom: 1px solid #f1f1f1; display:flex; justify-content:space-between; gap:10px;">
+            <span><strong><%= categoria %></strong></span>
+            <span>R$ <%= Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %> (<%= percentual.toFixed(1).replace('.', ',') %>%)</span>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Plano de Acao (Gerado pela IA)</h2>
+  <div class="dicas" style="background: #e8f0fe; padding: 20px; border-radius: 8px; border-left: 5px solid var(--primary); margin-top: 20px;">
+    <ul>
+      <% if (dados.dicas && dados.dicas.length) { dados.dicas.forEach((dica) => { %>
+        <li><%= dica %></li>
+      <% }) } else { %>
+        <li>Nenhuma dica disponivel neste relatorio.</li>
+      <% } %>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const reportContainer = document.getElementById('conteudo-pdf');
+  const rawLabels = JSON.parse(reportContainer?.getAttribute('data-chart-labels') || '[]');
+  const rawData = JSON.parse(reportContainer?.getAttribute('data-chart-values') || '[]');
+
+  if (rawLabels.length > 0) {
+    const ctx = document.getElementById('graficoDespesas').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: rawLabels,
+        datasets: [{
+          data: rawData,
+          backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#EA6A47','#A5D8DD','#5E92F3'],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        cutout: '65%',
+      },
+    });
+  }
+
+  function gerarPDF() {
+    const element = document.getElementById('conteudo-pdf');
+    const filenameStem = element?.getAttribute('data-filename-stem') || 'Diagnostico_Financeiro';
+    html2pdf().set({
+      margin: 10,
+      filename: `${filenameStem}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    }).from(element).save();
+  }
+</script>
+
+<style>
+  .saldo-final-positivo { color: var(--success); }
+  .saldo-final-negativo { color: var(--danger); }
+</style>
+
+<%- include('../partials/footer') %>

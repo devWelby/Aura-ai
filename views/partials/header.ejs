@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle || 'Aura-Ai' %></title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <% if (showAds && adsenseClientId) { %>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<%= adsenseClientId %>" crossorigin="anonymous"></script>
+  <% } %>
+</head>
+<body>
+  <header class="main-menu-wrap">
+    <div class="main-menu">
+      <a href="/index.php" class="brand">Analista IA</a>
+
+      <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" onclick="document.body.classList.toggle('menu-open'); this.setAttribute('aria-expanded', document.body.classList.contains('menu-open') ? 'true' : 'false');">
+        Menu
+      </button>
+
+      <nav class="menu-links" aria-label="Principal">
+        <a href="/index.php" class="<%= activePath === '/' || activePath === '/index.php' ? 'active' : '' %>">Dashboard</a>
+        <% if (session && session.usuario_id) { %>
+          <a href="/historico.php" class="<%= activePath === '/historico.php' || activePath === '/ver_relatorio.php' ? 'active' : '' %>">Historico</a>
+        <% } %>
+        <a href="/planos.php" class="<%= activePath === '/planos.php' || activePath === '/checkout.php' || activePath === '/sucesso.php' ? 'active' : '' %>">Planos</a>
+      </nav>
+
+      <div class="menu-user">
+        <% if (session && session.usuario_id) { %>
+          <span class="menu-pill">Plano <%= session.usuario_plano || 'gratis' %></span>
+          <form method="POST" action="/logout.php" style="margin: 0;">
+            <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
+            <button class="menu-logout" type="submit">Sair</button>
+          </form>
+        <% } else { %>
+          <a href="/login.php" class="menu-login <%= activePath === '/login.php' ? 'active' : '' %>">Entrar</a>
+          <a href="/cadastro.php" class="menu-signup <%= activePath === '/cadastro.php' ? 'active' : '' %>">Criar conta</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <% if (showAds && adsenseClientId && adsHeader) { %>
+    <div class="ad-wrapper">
+      <div class="ad-label">Publicidade</div>
+      <ins class="adsbygoogle ad-slot ad-slot-header" style="display:block" data-ad-client="<%= adsenseClientId %>" data-ad-slot="<%= adsHeader %>" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+  <% } %>

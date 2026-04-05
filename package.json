@@ -1,0 +1,45 @@
+{
+  "name": "aura-ai",
+  "version": "1.0.0",
+  "description": "Aura-Ai em Node.js",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "check": "node --check src/server.js",
+    "firebase:check": "node scripts/dev/firebase-check.js",
+    "test:http": "node --test tests/http/**/*.test.js",
+    "test": "npm run test:http",
+    "healthcheck": "node scripts/prod/healthcheck.js",
+    "start:prod": "pm2-runtime ecosystem.config.js --env production",
+    "pm2:start": "pm2 start ecosystem.config.js --env production",
+    "pm2:restart": "pm2 restart aura-ai",
+    "pm2:logs": "pm2 logs aura-ai"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.5.0",
+    "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2",
+    "express-mysql-session": "^3.0.3",
+    "express-rate-limit": "^7.5.1",
+    "express-session": "^1.18.1",
+    "firebase-admin": "^13.7.0",
+    "googleapis": "^144.0.0",
+    "helmet": "^8.1.0",
+    "hpp": "^0.2.3",
+    "multer": "^2.0.2",
+    "mysql2": "^3.14.0",
+    "pm2": "^5.4.3",
+    "resend": "^4.4.0",
+    "stripe": "^17.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.1"
+  }
+}

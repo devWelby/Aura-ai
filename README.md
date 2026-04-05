@@ -1,41 +1,103 @@
-# Analista Financeiro
+# Aura-Ai
 
-Projeto PHP para analise de extratos com IA, historico e assinatura Stripe.
+Aplicacao Node.js para analise financeira com upload de extrato, autenticacao, relatorios e assinatura.
 
-## Estrutura de pastas
+## Setup rapido
 
-- `assets/`: CSS e recursos visuais
-- `config/`: bootstrap de ambiente, sessao e banco (`init.php`)
-- `includes/`: partes compartilhadas de layout (`header.php`, `footer.php`)
-- `modules/app/`: paginas principais do dashboard
-- `modules/auth/`: login, cadastro e logout
-- `modules/relatorios/`: upload e visualizacao de relatorios
-- `modules/pagamentos/`: planos, checkout, sucesso e webhook
-- `public/`: front controller novo (`public/index.php`) e roteamento de transicao
-- `scripts/dev/`: scripts de manutencao e verificacao local
-- `vendor/`: dependencias do Composer
-- `*.php` na raiz: wrappers de compatibilidade para endpoints legados
+1. Instale dependencias.
 
-## Scripts de verificacao
+```bash
+npm install
+```
 
-- `composer lint`: valida sintaxe PHP de todos os arquivos (exceto `vendor/`)
-- `composer check`: executa o pipeline basico de checagens
+2. Crie o .env a partir de .env.example e preencha as chaves.
 
-## Convencoes do projeto
+3. Rode em desenvolvimento.
 
-- Sempre usar `require_once 'config/init.php';` como bootstrap.
-- Evitar criar conexoes diretas ao banco fora de `config/init.php`.
-- Formularios `POST` devem usar token CSRF (`csrf_token()` + `validar_csrf_post()`).
-- Preferir mensagens de erro genericas para nao expor detalhes internos.
+```bash
+npm run dev
+```
 
-## Compatibilidade de rotas
+## Operacao diaria
 
-- As URLs antigas foram preservadas.
-- Cada arquivo da raiz (ex: `login.php`, `checkout.php`) agora chama o roteador central em `config/router.php`.
-- O novo front controller fica em `public/index.php` e aceita rota por query string.
+- Rodar app local: npm run dev
+- Rodar app modo normal: npm start
+- Check de sintaxe: npm run check
+- Testes HTTP: npm test
+- Verificar integracao Firebase: npm run firebase:check
+- Suite local completa: powershell -ExecutionPolicy Bypass -File scripts/dev/run-checks.ps1
+- Suite completa com smoke real: set RUN_FULL=1 ; powershell -ExecutionPolicy Bypass -File scripts/dev/run-checks.ps1
 
-Exemplos:
-- `public/index.php?route=dashboard`
-- `public/index.php?route=auth/login`
-- `public/index.php?route=relatorios/historico`
-- `public/index.php?route=pagamentos/planos`
+## Deploy
+
+### PM2
+
+```bash
+npm run pm2:start
+npm run pm2:restart
+npm run pm2:logs
+```
+
+Configuracao em ecosystem.config.js.
+
+### Container/entrypoint
+
+```bash
+npm run start:prod
+```
+
+## Healthcheck
+
+- Endpoint: GET /healthz
+- Verificacao local: npm run healthcheck
+
+## Variaveis obrigatorias
+
+Sem esses valores a aplicacao nao opera corretamente em producao:
+
+- APP_ENV
+- PORT
+- APP_URL
+- DB_HOST
+- DB_PORT
+- DB_NAME
+- DB_USER
+- DB_PASS
+- SESSION_SECRET
+- COOKIE_SIGNING_SECRET
+- GEMINI_API_KEY
+- STRIPE_SECRET_KEY
+- STRIPE_PRICE_ID
+- STRIPE_WEBHOOK_SECRET
+
+## Firebase (preparado)
+
+O projeto foi preparado para integrar com Firebase Admin sem quebrar o fluxo atual.
+
+Estado atual:
+
+- Rotas continuam operando com MySQL
+- Firebase ja pode ser validado e monitorado pelo healthcheck
+
+Configuracao minima:
+
+- FIREBASE_PROJECT_ID
+- FIREBASE_SERVICE_ACCOUNT_PATH (arquivo JSON) ou FIREBASE_SERVICE_ACCOUNT_JSON (inline)
+
+Validacao:
+
+```bash
+npm run firebase:check
+```
+
+Para login social/e-mail, tambem preencher:
+
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- GOOGLE_REDIRECT_URI
+- RESEND_API_KEY
+
+## Notas operacionais
+
+- Endpoints publicos e internos permanecem em rotas com sufixo .php por compatibilidade.
+- Upload de planilha aceita apenas CSV e XLSX.

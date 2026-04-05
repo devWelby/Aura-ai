@@ -1,16 +1,22 @@
-# -------------------------------------------------------
-# DEPENDENCIAS
-# -------------------------------------------------------
-/vendor/
-composer.phar
+# ------------------------------
+# Node dependencies and cache
+# ------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
 
-# -------------------------------------------------------
-# SEGREDOS E VARIAVEIS DE AMBIENTE (NUNCA subir ao git)
-# -------------------------------------------------------
+# ------------------------------
+# Environment and secrets
+# ------------------------------
 .env
 .env.local
 .env.production
 .env.staging
+firebase-service-account*.json
+serviceAccountKey*.json
 *.key
 *.pem
 *.p12
@@ -20,31 +26,40 @@ composer.phar
 *_ecdsa
 *_ed25519
 
-# -------------------------------------------------------
-# DADOS SENSIVEIS (uploads, dumps, extratos)
-# -------------------------------------------------------
-/uploads/
-/storage/
+# ------------------------------
+# Runtime artifacts
+# ------------------------------
+logs/
+*.log
+.pm2/
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ------------------------------
+# Uploads and local data
+# ------------------------------
+uploads/
+storage/
+tmp/
 *.sql
 *.sql.gz
 *.dump
 *.bak
-*.csv
-*.xlsx
-*.xls
-*.pdf
 
-# -------------------------------------------------------
-# LOGS DE SISTEMA E ERROS
-# -------------------------------------------------------
-*.log
-error_log
-php_errors.log
-access_log
+# ------------------------------
+# Coverage and build outputs
+# ------------------------------
+coverage/
+.nyc_output/
+dist/
+build/
+.cache/
 
-# -------------------------------------------------------
-# SISTEMA OPERACIONAL
-# -------------------------------------------------------
+# ------------------------------
+# OS files
+# ------------------------------
 .DS_Store
 .DS_Store?
 ._*
@@ -54,9 +69,9 @@ ehthumbs.db
 Thumbs.db
 desktop.ini
 
-# -------------------------------------------------------
-# IDES E EDITORES
-# -------------------------------------------------------
+# ------------------------------
+# IDE/editor
+# ------------------------------
 .idea/
 .vscode/
 *.swp
@@ -66,17 +81,3 @@ desktop.ini
 .classpath
 .settings/
 nbproject/
-
-# -------------------------------------------------------
-# DEPLOY E BUILD
-# -------------------------------------------------------
-/dist/
-/build/
-/.cache/
-node_modules/
-
-# -------------------------------------------------------
-# ARQUIVOS DE SESSAO PHP (se salvar em disco)
-# -------------------------------------------------------
-/sessions/
-sess_*

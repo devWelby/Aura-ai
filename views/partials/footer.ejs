@@ -1,0 +1,9 @@
+<% if (showAds && adsenseClientId && adsFooter) { %>
+  <div class="ad-wrapper">
+    <div class="ad-label">Publicidade</div>
+    <ins class="adsbygoogle ad-slot ad-slot-footer" style="display:block" data-ad-client="<%= adsenseClientId %>" data-ad-slot="<%= adsFooter %>" data-ad-format="auto" data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+<% } %>
+</body>
+</html>

@@ -139,6 +139,34 @@ body {
     margin-top: 40px;
 }
 
+.ad-wrapper {
+    width: 100%;
+    max-width: 900px;
+    margin: 8px auto 16px auto;
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.ad-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.ad-slot {
+    min-height: 90px;
+}
+
+.ad-slot-header,
+.ad-slot-footer {
+    min-height: 90px;
+}
+
 .container-small {
     max-width: 450px;
     margin-top: 10vh;
@@ -220,5 +248,15 @@ input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px
     .container {
         padding: 20px;
         margin-top: 12px;
+    }
+
+    .ad-wrapper {
+        margin: 6px auto 12px auto;
+    }
+
+    .ad-slot,
+    .ad-slot-header,
+    .ad-slot-footer {
+        min-height: 100px;
     }
 }

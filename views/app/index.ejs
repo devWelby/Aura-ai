@@ -1,0 +1,68 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+  <div class="top-bar">
+    <div>
+      <span style="font-size: 1.2rem; font-weight: bold;">Ola, <%= nomeUsuario %> 👋</span>
+      <% if (planoUsuario !== 'visitante') { %>
+        <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 10px; text-transform: uppercase;">Plano <%= planoUsuario %></span>
+      <% } %>
+    </div>
+    <div style="font-size: 13px; color: var(--text-muted);">Resumo do mes em tempo real</div>
+  </div>
+
+  <div style="text-align: center;">
+    <h2>Analise Financeira Inteligente</h2>
+    <p style="color: var(--text-muted); margin-bottom: 20px;">Faca o upload do seu extrato para receber um diagnostico guiado por IA.</p>
+
+    <% if (!isLogged || planoUsuario === 'gratis') { %>
+      <% const percentualUsado = (analisesUsadas / limiteGratuito) * 100; %>
+      <div style="margin-bottom: 30px; background: #f5f7fa; border-radius: 12px; border: 1px solid #e0e3e9; padding: 16px; max-width: 400px; margin-left: auto; margin-right: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span style="font-weight: 700; color: var(--text-main); font-size: 14px;">Analises Disponiveis</span>
+          <span style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;"><%= analisesRestantes %>/<%= limiteGratuito %></span>
+        </div>
+
+        <div style="background: #e0e3e9; border-radius: 999px; height: 10px; overflow: hidden;" data-progress="<%= Math.max(0, Math.min(100, percentualUsado)) %>">
+          <div class="usage-progress-fill" style="background: linear-gradient(90deg, var(--primary), #0d47a1); height: 100%; width: 0; transition: width 0.4s ease;"></div>
+        </div>
+      </div>
+    <% } else if (isLogged && planoUsuario === 'pro') { %>
+      <div style="margin-bottom: 30px; background: linear-gradient(135deg, #c8e6c9, #a5d6a7); border-radius: 12px; border: 2px solid var(--success); padding: 16px; max-width: 400px; margin-left: auto; margin-right: auto; color: #1b5e20;">
+        <div style="font-weight: 700; font-size: 14px; margin-bottom: 6px;">Plano Pro</div>
+        <div style="font-size: 13px;">Analises ilimitadas - aproveite ao maximo!</div>
+      </div>
+    <% } %>
+
+    <% if (temAcesso) { %>
+      <form id="uploadForm" action="/processar_upload.php" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
+        <div style="border: 2px dashed var(--primary); padding: 40px; border-radius: 12px; margin-bottom: 20px; background: #f8faff;">
+          <label for="extrato" style="font-size: 18px;">Selecione seu extrato ou planilha:</label>
+          <p style="font-size: 13px; color: var(--text-muted);">PDF, CSV, XLSX</p>
+          <input type="file" name="extrato" id="extrato" accept=".pdf,.csv,.xlsx" required style="border: none; padding: 0;">
+        </div>
+        <button type="submit" class="btn">Enviar e Analisar via IA</button>
+      </form>
+    <% } else { %>
+      <div style="border: 2px dashed var(--danger); padding: 40px; border-radius: 12px; margin-bottom: 20px; background: #fff;">
+        <h3 style="color: var(--danger);">Seu limite gratuito acabou!</h3>
+        <p>Para continuar analisando seus gastos com IA, libere o acesso ilimitado.</p>
+        <a href="/planos.php" class="btn" style="background: var(--success); width: auto; margin-top: 15px;">Ver Planos e Assinar</a>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  const progressTrack = document.querySelector('[data-progress]');
+  if (progressTrack) {
+    const fill = progressTrack.querySelector('.usage-progress-fill');
+    const value = Number.parseFloat(progressTrack.getAttribute('data-progress') || '0');
+    if (fill) {
+      fill.style.width = `${Math.max(0, Math.min(100, value))}%`;
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>

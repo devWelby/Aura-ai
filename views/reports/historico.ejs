@@ -1,0 +1,49 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+  <div class="top-bar">
+    <h1 style="margin: 0;">Meu Historico</h1>
+    <div><a href="/index.php" class="btn" style="width: auto; padding: 10px 20px;">Novo Upload</a></div>
+  </div>
+
+  <% if (historico && historico.length > 0) { %>
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <thead>
+          <tr>
+            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted); text-transform: uppercase; font-size: 13px;">Data da Analise</th>
+            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted); text-transform: uppercase; font-size: 13px;">Periodo</th>
+            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted); text-transform: uppercase; font-size: 13px;">Entradas</th>
+            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted); text-transform: uppercase; font-size: 13px;">Saidas</th>
+            <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-muted); text-transform: uppercase; font-size: 13px;">Balanco</th>
+            <th style="padding: 15px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-muted); text-transform: uppercase; font-size: 13px;">Acao</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% historico.forEach((item) => { %>
+            <% const dt = new Date(item.criado_em); const saldoClass = Number(item.saldo) >= 0 ? 'saldo-positivo' : 'saldo-negativo'; %>
+            <tr style="border-bottom: 1px solid var(--border-color); transition: 0.2s;">
+              <td style="padding: 15px;"><%= dt.toLocaleString('pt-BR') %></td>
+              <td style="padding: 15px; font-weight: 600;"><%= item.mes_referencia %></td>
+              <td style="padding: 15px; color: var(--success); font-weight: 600;">R$ <%= Number(item.entradas).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></td>
+              <td style="padding: 15px; color: var(--danger); font-weight: 600;">R$ <%= Number(item.saidas).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></td>
+              <td class="<%= saldoClass %>" style="padding: 15px; font-weight: 600;">R$ <%= Number(item.saldo).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) %></td>
+              <td style="padding: 15px; text-align: center;"><a href="/ver_relatorio.php?id=<%= item.id %>" class="btn btn-secondary" style="padding: 8px 15px; font-size: 13px; width: auto;">Abrir</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <style>
+      .saldo-positivo { color: var(--success); }
+      .saldo-negativo { color: var(--danger); }
+    </style>
+  <% } else { %>
+    <div style="text-align: center; padding: 50px 20px; color: var(--text-muted);">
+      <h3>Voce ainda nao possui analises no historico.</h3>
+      <p>Envie seu primeiro extrato para ver os relatorios salvos aqui.</p>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

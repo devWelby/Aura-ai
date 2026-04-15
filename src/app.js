@@ -21,6 +21,30 @@ const paymentRouter = require('./routes/payments');
 const pool = require('./config/db');
 const { checkFirebaseHealth } = require('./config/firebase');
 
+function shouldSendUpgradeInsecureRequests() {
+  if (appEnv !== 'production') {
+    return false;
+  }
+
+  if (String(process.env.ENFORCE_HTTPS || '1') === '0') {
+    return false;
+  }
+
+  const explicitAppUrl = String(process.env.APP_URL || '').trim();
+  if (explicitAppUrl) {
+    try {
+      const host = new URL(explicitAppUrl).hostname.toLowerCase();
+      if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+        return false;
+      }
+    } catch (err) {
+      // Ignore invalid APP_URL and keep secure defaults in production.
+    }
+  }
+
+  return true;
+}
+
 const cspDirectives = {
   defaultSrc: ["'self'"],
   baseUri: ["'self'"],
@@ -37,7 +61,7 @@ const cspDirectives = {
   connectSrc: ["'self'", 'https://pagead2.googlesyndication.com'],
   frameSrc: ["'self'", 'https://googleads.g.doubleclick.net'],
   formAction: ["'self'"],
-  ...(appEnv === 'production' ? { upgradeInsecureRequests: [] } : {}),
+  ...(shouldSendUpgradeInsecureRequests() ? { upgradeInsecureRequests: [] } : {}),
 };
 
 function createApp(options = {}) {

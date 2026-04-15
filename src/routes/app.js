@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { ensureCsrfToken, readSignedFreeUsage, validateCsrfPost } = require('../utils/security');
 const { freeAnalysesRemainingUser } = require('../utils/helpers');
+const { asyncHandler } = require('../utils/asyncHandler');
 
 const router = express.Router();
 
@@ -55,7 +56,7 @@ async function monthSavingsProgress(usuarioId) {
   };
 }
 
-router.post(['/dashboard/meta-economia', '/index/meta-economia'], validateCsrfPost, async (req, res) => {
+router.post(['/dashboard/meta-economia', '/index/meta-economia'], validateCsrfPost, asyncHandler(async (req, res) => {
   const isLogged = Boolean(req.session.usuario_id);
   if (!isLogged) {
     return res.redirect('/login.php');
@@ -67,9 +68,9 @@ router.post(['/dashboard/meta-economia', '/index/meta-economia'], validateCsrfPo
 
   await writeSavingsGoal(Number(req.session.usuario_id), goal);
   return res.redirect('/index.php?meta=salva');
-});
+}));
 
-router.get(['/', '/index.php', '/dashboard'], async (req, res) => {
+router.get(['/', '/index.php', '/dashboard'], asyncHandler(async (req, res) => {
   const isLogged = Boolean(req.session.usuario_id);
   const nomeUsuario = isLogged ? req.session.usuario_nome : 'Visitante';
 
@@ -126,7 +127,7 @@ router.get(['/', '/index.php', '/dashboard'], async (req, res) => {
     metaSalva: String(req.query.meta || '') === 'salva',
     csrfToken: ensureCsrfToken(req),
   });
-});
+}));
 
 module.exports = {
   appRouter: router,

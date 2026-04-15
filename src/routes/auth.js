@@ -7,6 +7,7 @@ const { Resend } = require('resend');
 const pool = require('../config/db');
 const { ensureCsrfToken, validateCsrfPost } = require('../utils/security');
 const { sanitize, appBaseUrl } = require('../utils/helpers');
+const { asyncHandler } = require('../utils/asyncHandler');
 
 const router = express.Router();
 
@@ -55,7 +56,7 @@ router.get(['/login.php', '/auth/login'], (req, res) => {
   });
 });
 
-router.post(['/login.php', '/auth/login'], authLimiter, validateCsrfPost, async (req, res) => {
+router.post(['/login.php', '/auth/login'], authLimiter, validateCsrfPost, asyncHandler(async (req, res) => {
   if (req.session.usuario_id) {
     return res.redirect('/index.php');
   }
@@ -131,7 +132,7 @@ router.post(['/login.php', '/auth/login'], authLimiter, validateCsrfPost, async 
     sucesso: '',
     csrfToken: ensureCsrfToken(req),
   });
-});
+}));
 
 router.get(['/cadastro.php', '/auth/cadastro'], (req, res) => {
   if (req.session.usuario_id) {
@@ -146,7 +147,7 @@ router.get(['/cadastro.php', '/auth/cadastro'], (req, res) => {
   });
 });
 
-router.post(['/cadastro.php', '/auth/cadastro'], authLimiter, validateCsrfPost, async (req, res) => {
+router.post(['/cadastro.php', '/auth/cadastro'], authLimiter, validateCsrfPost, asyncHandler(async (req, res) => {
   if (req.session.usuario_id) {
     return res.redirect('/index.php');
   }
@@ -209,7 +210,7 @@ router.post(['/cadastro.php', '/auth/cadastro'], authLimiter, validateCsrfPost, 
     sucesso,
     csrfToken: ensureCsrfToken(req),
   });
-});
+}));
 
 router.post(['/logout.php', '/auth/logout'], validateCsrfPost, (req, res) => {
   req.session.regenerate(() => {
@@ -250,7 +251,7 @@ router.get(['/login_google.php', '/auth/login-google'], (req, res) => {
   return res.redirect(url);
 });
 
-router.get(['/callback_google.php', '/auth/callback-google'], async (req, res) => {
+router.get(['/callback_google.php', '/auth/callback-google'], asyncHandler(async (req, res) => {
   if (!req.query.code) {
     return res.redirect('/login.php?erro=google_cancelado');
   }
@@ -331,7 +332,11 @@ router.get(['/callback_google.php', '/auth/callback-google'], async (req, res) =
       userPlan = 'gratis';
     }
 
-    req.session.regenerate(() => {
+    req.session.regenerate((sessionError) => {
+      if (sessionError) {
+        return res.status(500).send('Erro interno ao autenticar com Google.');
+      }
+
       req.session.usuario_id = userId;
       req.session.usuario_nome = userName;
       req.session.usuario_plano = userPlan;
@@ -343,9 +348,9 @@ router.get(['/callback_google.php', '/auth/callback-google'], async (req, res) =
   } catch (err) {
     return res.redirect('/login.php?erro=google_falha_autenticacao');
   }
-});
+}));
 
-router.get(['/verificar_email.php', '/auth/verificar-email'], async (req, res) => {
+router.get(['/verificar_email.php', '/auth/verificar-email'], asyncHandler(async (req, res) => {
   const token = String(req.query.token || '').trim();
   if (!/^[a-f0-9]{64}$/i.test(token)) {
     return res.status(400).send('Link invalido ou expirado.');
@@ -362,6 +367,6 @@ router.get(['/verificar_email.php', '/auth/verificar-email'], async (req, res) =
   }
 
   return res.status(400).send('<div style="text-align:center; margin-top:50px; font-family:sans-serif;"><h2>Link invalido</h2><p>Este link ja foi usado ou nao existe mais. Tente fazer login.</p><a href="/login.php">Ir para Login</a></div>');
-});
+}));
 
 module.exports = router;

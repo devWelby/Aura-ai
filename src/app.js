@@ -112,7 +112,11 @@ function createApp(options = {}) {
     });
 
     sessionStore.on('error', (err) => {
-      console.error('Session store error:', err.message);
+      if (appEnv !== 'production') {
+        console.warn('[session-store] erro na store MySQL:', err.message);
+      } else {
+        console.error('Session store error:', err.message);
+      }
     });
   }
 
@@ -187,11 +191,50 @@ function createApp(options = {}) {
     sessionConfig.store = sessionStore;
   }
 
+  const fallbackSessionConfig = {
+    ...sessionConfig,
+  };
+  delete fallbackSessionConfig.store;
+
   app.use(session(sessionConfig));
+  const fallbackSessionMiddleware = session(fallbackSessionConfig);
+
+  // Se a store MySQL não conseguir conectar, o express-session chama next(err).
+  // Recuperamos criando uma sessão efêmera em memória para não derrubar o servidor.
+  const DB_SESSION_ERR_CODES = new Set([
+    'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND',
+    'PROTOCOL_CONNECTION_LOST', 'ER_ACCESS_DENIED_ERROR',
+  ]);
+  app.use((err, req, res, next) => {
+    if (!err || !DB_SESSION_ERR_CODES.has(err.code)) {
+      return next(err);
+    }
+    if (appEnv === 'production') {
+      return next(err);
+    }
+    console.warn('[session-store] MySQL indisponivel — fallback para sessao em memoria:', err.message);
+
+    return fallbackSessionMiddleware(req, res, next);
+  });
+
+  app.use((err, req, res, next) => {
+    if (!err || appEnv === 'production') {
+      return next(err);
+    }
+    if (DB_SESSION_ERR_CODES.has(err.code)) {
+      console.warn('[session-store] erro de persistencia de sessao ignorado em dev:', err.message);
+      return next();
+    }
+    return next(err);
+  });
+
   app.use(sessionSecurity);
 
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, '..', 'views'));
+  app.get('/favicon.ico', (req, res) => {
+    res.status(204).end();
+  });
   app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
   app.use('/vendor/chart.js', express.static(path.join(__dirname, '..', 'node_modules', 'chart.js', 'dist')));
   app.use('/vendor/html2pdf.js', express.static(path.join(__dirname, '..', 'node_modules', 'html2pdf.js', 'dist')));
@@ -250,8 +293,18 @@ function createApp(options = {}) {
   });
 
   app.use((err, req, res, next) => {
+    const isDbConnErr = err && DB_SESSION_ERR_CODES && DB_SESSION_ERR_CODES.has(err.code);
     if (appEnv !== 'production') {
-      console.error(err);
+      if (isDbConnErr) {
+        console.warn('[db] conexao recusada (MySQL indisponivel):', err.message);
+      } else {
+        console.error(err);
+      }
+    } else if (!isDbConnErr) {
+      console.error(err.message || err);
+    }
+    if (res.headersSent) {
+      return next(err);
     }
     res.status(500).send('Erro interno no servidor.');
   });

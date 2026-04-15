@@ -1,7 +1,7 @@
 <%- include('../partials/header') %>
 
-<script src="<%= appUrl %>/vendor/chart.js/chart.umd.min.js" defer></script>
-<script src="<%= appUrl %>/vendor/html2pdf.js/html2pdf.bundle.min.js" defer></script>
+<script src="/vendor/chart.js/chart.umd.min.js" defer></script>
+<script src="/vendor/html2pdf.js/html2pdf.bundle.min.js" defer></script>
 
 <div
   class="container"
@@ -254,7 +254,7 @@
 
 <textarea id="chart-labels-json" hidden><%- labelsChart %></textarea>
 <textarea id="chart-values-json" hidden><%- valoresChart %></textarea>
-<script src="<%= appUrl %>/assets/js/report-view.js" defer></script>
+<script src="/assets/js/report-view.js" defer></script>
 
 <style>
   .saldo-final-positivo { color: var(--success); }
